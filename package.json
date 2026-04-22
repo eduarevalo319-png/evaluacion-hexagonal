@@ -1,0 +1,17 @@
+{
+  "name": "evaluacion-hexagonal",
+  "version": "1.0.0",
+  "description": "Proyecto de evaluación con arquitectura hexagonal",
+  "main": "main.js",
+  "scripts": {
+    "start": "node main.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "hexagonal",
+    "evaluacion",
+    "servidor"
+  ],
+  "author": "Tu Nombre",
+  "license": "ISC"
+}
