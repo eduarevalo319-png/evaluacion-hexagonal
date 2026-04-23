@@ -1,0 +1,36 @@
+<div style="padding: 30px; font-family: Arial, sans-serif; background-color: #f9f9f9; min-height: 100vh;">
+  <h1 style="color: #333; text-align: center;">📊 Reporte de Ascensos</h1>
+  
+  <table style="width: 100%; max-width: 800px; margin: 0 auto; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 8px rgba(0,0,0,0.1); border-collapse: collapse;">
+    <thead style="background-color: #0056b3; color: white;">
+      <tr>
+        <th style="padding: 15px; text-align: center;">Puesto</th>
+        <th style="padding: 15px; text-align: left;">Servidor</th>
+        <th style="padding: 15px; text-align: center;">Promedio</th>
+        <th style="padding: 15px; text-align: center;">Condición</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Usamos el nuevo formato de Angular moderno (@for) -->
+      @for (servidor of servidores; track servidor.nombre; let i = $index) {
+        <tr style="border-bottom: 1px solid #eee;">
+          <td style="padding: 15px; text-align: center; font-weight: bold;">{{ i + 1 }}</td>
+          <td style="padding: 15px; text-transform: uppercase;">{{ servidor.nombre }}</td>
+          <td style="padding: 15px; text-align: center;">{{ servidor.promedio | number:'1.2-2' }}</td>
+          
+          <td style="padding: 15px; text-align: center; font-weight: bold;" 
+              [style.color]="servidor.estado === 'APTO PARA ASCENSO' ? '#28a745' : '#dc3545'">
+            {{ servidor.estado }}
+          </td>
+        </tr>
+      } @empty {
+        <!-- Si el arreglo está vacío, mostraremos este mensaje -->
+        <tr>
+          <td colspan="4" style="padding: 20px; text-align: center; color: #777;">
+            No hay datos en la base de datos (El arreglo está vacío).
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>
