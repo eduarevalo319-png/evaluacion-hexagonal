@@ -1,29 +1,27 @@
+const express = require('express');
+const cors = require('cors');
 const RepositorioBaseDatos = require('./infraestructura/RepositorioBaseDatos');
 const GenerarReporteUseCase=require('./aplicacion/GenerarReporteUseCase');
 
 const repositorio = new RepositorioBaseDatos();
 const generarReporte=new GenerarReporteUseCase(repositorio);
 
-async function iniciarAplicacion() {
+const app = express();
+app.use(cors()); // Permite que Angular se conecte sin problemas de seguridad (CORS)
+app.use(express.json());
+
+app.get('/api/reporte', async (req, res) => {
     try {
         const reporteFinal = await generarReporte.ejecutar();
-        console.log("===================================");
-        console.log("REPORTE DE ANTIGUEDAD");
-        console.log("===================================");
-        reporteFinal.forEach((servidor,indice)=>{
-            let puesto=indice+1;
-            const sufijos = { 1: 'ra', 2: 'da', 3: 'ra', 7: 'ma', 8: 'va', 9: 'na', 10: 'ma' };
-            const sufijo = sufijos[puesto] || 'ta';
-            console.log(`${puesto}${sufijo} Antiguedad|${servidor.nombre}`);
-            console.log(`Promedio:${servidor.promedio.toFixed(2)}`);
-            console.log(`-Condicion:${servidor.estado}`);
-            console.log('-----------------------------------');
-        });
+        // En lugar de imprimir en consola, enviamos los datos como JSON
+        res.json(reporteFinal);
     } catch (error) {
-        console.log("❌ UPS! Hubo un problema al iniciar la aplicación.");
-        console.log("Por favor, verifica que tu base de datos MySQL esté encendida.");
-        console.log("Detalle técnico:", error.message);
+        console.error("Error técnico:", error.message);
+        res.status(500).json({ error: "Hubo un problema al generar el reporte" });
     }
-}
+});
 
-iniciarAplicacion();
+const PORT = 3000;
+app.listen(PORT, () => {
+    console.log(`🚀 Servidor API corriendo en http://localhost:${PORT}`);
+});
