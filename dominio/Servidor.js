@@ -5,11 +5,8 @@ class Servidor{
     }
     //REGLA DE NEGOCIO :¿COMO SE CALCULA EL PROMEDIO?
     calcularPromedio(){
-        let suma=0;
-        for(let i=0;i<this.notas.length;i++){
-            suma+=this.notas[i];    
-        }
-        return suma/this.notas.length;
+        const suma = this.notas.reduce((acumulador, nota) => acumulador + nota, 0);
+        return suma / this.notas.length;
     }
     //REGLA DE NEGOCIO :¿CUANDO ES APTO PARA ASCENSO?
     obtenerEstado(){
