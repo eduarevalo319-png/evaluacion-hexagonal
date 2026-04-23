@@ -8,10 +8,15 @@ class GenerarReporteUseCase{
         // Agregamos 'await' para esperar los datos
         const servidores = await this.repositorio.obtenerPersonal();
         const resultados=servidores.map(servidor=>{
+            // REGLAS ADAPTADAS EN LA CAPA DE APLICACIÓN
+            const suma = servidor.notas.reduce((acumulador, nota) => acumulador + nota, 0);
+            const promedioCalculado = suma / servidor.notas.length;
+            const estadoEvaluado = promedioCalculado >= 14 ? "APTO PARA ASCENSO" : "NO ES APTO PARA ASCENSO";
+
             return{
                 nombre:servidor.nombre,
-                promedio:servidor.calcularPromedio(),
-                estado:servidor.obtenerEstado()
+                promedio: promedioCalculado,
+                estado: estadoEvaluado
             };
         });
         resultados.sort((a,b)=>b.promedio-a.promedio);
