@@ -12,7 +12,9 @@ async function iniciarAplicacion() {
         console.log("===================================");
         reporteFinal.forEach((servidor,indice)=>{
             let puesto=indice+1;
-            console.log(`${puesto}ra Antiguedad|${servidor.nombre}`);
+            const sufijos = { 1: 'ra', 2: 'da', 3: 'ra', 7: 'ma', 8: 'va', 9: 'na', 10: 'ma' };
+            const sufijo = sufijos[puesto] || 'ta';
+            console.log(`${puesto}${sufijo} Antiguedad|${servidor.nombre}`);
             console.log(`Promedio:${servidor.promedio.toFixed(2)}`);
             console.log(`-Condicion:${servidor.estado}`);
             console.log('-----------------------------------');
