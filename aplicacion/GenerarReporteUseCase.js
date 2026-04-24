@@ -9,7 +9,7 @@ class GenerarReporteUseCase{
         const servidores = await this.repositorio.obtenerPersonal();
         const resultados=servidores.map(servidor=>{
             // REGLAS ADAPTADAS EN LA CAPA DE APLICACIÓN
-            const suma = servidor.notas.reduce((acumulador, nota) => acumulador + nota, 0);
+            const suma = servidor.notas.reduce((acumulador, nota) => acumulador + Number(nota), 0);
             const promedioCalculado = suma / servidor.notas.length;
             const estadoEvaluado = promedioCalculado >= 14 ? "APTO PARA ASCENSO" : "NO ES APTO PARA ASCENSO";
 
