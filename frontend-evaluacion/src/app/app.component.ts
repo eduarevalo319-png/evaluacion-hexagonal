@@ -779,8 +779,8 @@ export class AppComponent implements OnInit {
 
   obtenerMatriculas() {
     this.http.get<any[]>('http://localhost:3000/api/matriculas').subscribe({
-      next: (datos) => this.matriculas = datos,
-      error: (err) => console.error("Error al obtener matrículas:", err)
+      next: (datos) => { this.matriculas = datos; this.cdr.detectChanges(); },
+      error: (err) => { console.error("Error al obtener matrículas:", err); this.cdr.detectChanges(); }
     });
   }
 
@@ -826,8 +826,8 @@ export class AppComponent implements OnInit {
 
   obtenerAsignaciones() {
     this.http.get<any[]>('http://localhost:3000/api/asignacion-docentes').subscribe({
-      next: (datos) => this.asignaciones = datos,
-      error: (err) => console.error("Error al obtener asignaciones:", err)
+      next: (datos) => { this.asignaciones = datos; this.cdr.detectChanges(); },
+      error: (err) => { console.error("Error al obtener asignaciones:", err); this.cdr.detectChanges(); }
     });
   }
 
@@ -877,8 +877,8 @@ export class AppComponent implements OnInit {
 
   obtenerCalificaciones() {
     this.http.get<any[]>('http://localhost:3000/api/calificaciones').subscribe({
-      next: (datos) => this.calificaciones = datos,
-      error: (err) => console.error("Error al obtener calificaciones:", err)
+      next: (datos) => { this.calificaciones = datos; this.cdr.detectChanges(); },
+      error: (err) => { console.error("Error al obtener calificaciones:", err); this.cdr.detectChanges(); }
     });
   }
 
@@ -939,8 +939,8 @@ export class AppComponent implements OnInit {
 
   obtenerSolicitudes() {
     this.http.get<any[]>('http://localhost:3000/api/solicitudes').subscribe({
-      next: (datos) => this.solicitudes = datos,
-      error: (err) => console.error("Error al obtener solicitudes:", err)
+      next: (datos) => { this.solicitudes = datos; this.cdr.detectChanges(); },
+      error: (err) => { console.error("Error al obtener solicitudes:", err); this.cdr.detectChanges(); }
     });
   }
 
@@ -989,8 +989,8 @@ export class AppComponent implements OnInit {
 
   obtenerCursoAsignaturas() {
     this.http.get<any[]>('http://localhost:3000/api/curso-asignaturas').subscribe({
-      next: (datos) => this.cursoAsignaturas = datos,
-      error: (err) => console.error("Error al obtener asignaciones de materias:", err)
+      next: (datos) => { this.cursoAsignaturas = datos; this.cdr.detectChanges(); },
+      error: (err) => { console.error("Error al obtener asignaciones de materias:", err); this.cdr.detectChanges(); }
     });
   }
 
@@ -999,7 +999,10 @@ export class AppComponent implements OnInit {
     this.mostrarModalCursoAsignatura = true;
   }
 
-  cerrarModalCursoAsignatura() { this.mostrarModalCursoAsignatura = false; }
+  cerrarModalCursoAsignatura() { 
+    this.mostrarModalCursoAsignatura = false; 
+    this.cdr.detectChanges();
+  }
 
   guardarCursoAsignatura() {
     if (!this.nuevoCursoAsignatura.curso_id || !this.nuevoCursoAsignatura.asignatura_id) {
@@ -1027,8 +1030,8 @@ export class AppComponent implements OnInit {
 
   obtenerAuditoria() {
     this.http.get<any[]>('http://localhost:3000/api/auditoria').subscribe({
-      next: (datos) => this.auditorias = datos,
-      error: (err) => console.error("Error al obtener la auditoría:", err)
+      next: (datos) => { this.auditorias = datos; this.cdr.detectChanges(); },
+      error: (err) => { console.error("Error al obtener la auditoría:", err); this.cdr.detectChanges(); }
     });
   }
 
@@ -1036,8 +1039,8 @@ export class AppComponent implements OnInit {
 
   obtenerActividades() {
     this.http.get<any[]>('http://localhost:3000/api/actividades').subscribe({
-      next: (datos) => this.actividades = datos,
-      error: (err) => console.error("Error al obtener actividades:", err)
+      next: (datos) => { this.actividades = datos; this.cdr.detectChanges(); },
+      error: (err) => { console.error("Error al obtener actividades:", err); this.cdr.detectChanges(); }
     });
   }
 
@@ -1050,7 +1053,10 @@ export class AppComponent implements OnInit {
     this.mostrarModalActividad = true;
   }
 
-  cerrarModalActividad() { this.mostrarModalActividad = false; }
+  cerrarModalActividad() { 
+    this.mostrarModalActividad = false; 
+    this.cdr.detectChanges();
+  }
 
   guardarActividad() {
     if (!this.nuevaActividad.asignatura_id || !this.nuevaActividad.nombre || !this.nuevaActividad.caracteristica) {
@@ -1088,7 +1094,7 @@ export class AppComponent implements OnInit {
     }
     this.procesando = true;
     this.http.post<any[]>('http://localhost:3000/api/sincronizacion/manual', this.parametrosSync).subscribe({
-      next: (reporte) => { this.procesando = false; this.reporteSincronizacion = reporte; alert('Sincronización completada.'); },
+      next: (reporte) => { this.procesando = false; this.reporteSincronizacion = reporte; alert('Sincronización completada.'); this.cdr.detectChanges(); },
       error: (err) => { this.procesando = false; alert(err.error?.error || 'Ocurrió un error al intentar sincronizar con Moodle.'); }
     });
   }
@@ -1180,8 +1186,9 @@ export class AppComponent implements OnInit {
         this.parametros = datos;
         this.estadosPromocion = datos.filter(p => p.tipo === 'ESTADO_PROMOCION');
         this.caracteristicasActividad = datos.filter(p => p.tipo === 'CARACTERISTICA_ACTIVIDAD');
+        this.cdr.detectChanges();
       },
-      error: (err) => console.error("Error al obtener parametros:", err)
+      error: (err) => { console.error("Error al obtener parametros:", err); this.cdr.detectChanges(); }
     });
   }
 
