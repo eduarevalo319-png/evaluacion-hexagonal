@@ -1,51 +1,1634 @@
-<div class="contenedor">
-  <h1 class="titulo">📊 Reporte de Ascensos</h1>
+@if (!usuarioActual) {
+<!-- PANTALLA DE LOGIN -->
+<div style="min-height: 100vh; display: flex; justify-content: center; align-items: center; background-color: var(--secondary);">
+  <div class="card text-center" style="width: 100%; max-width: 400px; margin: 20px;">
+    <h1 style="color: var(--primary); margin-top: 0;">👮‍♂️ SIIPNE 3W</h1>
+    <h2 style="color: var(--text-muted); font-size: 1.2rem; margin-bottom: 30px; font-weight: normal;">Academia de Estudios Estratégicos</h2>
+    
+    <div class="form-group text-left">
+      <label>Número de Cédula:</label>
+      <input type="text" [(ngModel)]="cedulaLogin" placeholder="Ej. 1234567890">
+    </div>
+    
+    <div class="form-group text-left mb-4">
+      <label>Contraseña:</label>
+      <input type="password" [(ngModel)]="passwordLogin" (keyup.enter)="iniciarSesion()" placeholder="********">
+    </div>
+    
+    <button type="button" class="btn-primario" style="width: 100%; padding: 14px;" (click)="iniciarSesion()" [disabled]="procesando">
+      {{ procesando ? '⏳ Verificando...' : 'Ingresar al Sistema' }}
+    </button>
+  </div>
+</div>
+} @else {
+<!-- HEADER Y BOTÓN DE SALIR -->
+<div class="header-main">
+  <h2>👮‍♂️ SIIPNE 3W - Gestión Académica</h2>
+  <div class="header-user">
+    <span>👤 <b>{{ usuarioActual.nombres }} {{ usuarioActual.apellidos }}</b> ({{ usuarioActual.rol }})</span>
+    <button class="btn-peligro" style="padding: 6px 12px; font-size: 0.85rem;" (click)="cerrarSesion()">Cerrar Sesión</button>
+  </div>
+</div>
+
+<!-- PESTAÑAS DE NAVEGACIÓN PRINCIPAL -->
+<div class="nav-tabs">
+
+  <!-- GRUPO 1: ACADEMIA -->
+  @if (usuarioActual.rol === 'ADMIN' || usuarioActual.rol === 'DIRECTOR') {
+    <div class="dropdown">
+      <button class="nav-tab" [class.active]="['promociones', 'cursos', 'paralelos', 'asignaturas', 'actividades', 'curso-asignaturas'].includes(vistaActual)">🏛️ Academia ▾</button>
+      <div class="dropdown-content">
+        <button [class.active-item]="vistaActual === 'promociones'" (click)="cambiarVista('promociones')">🎓 Promociones</button>
+        <button [class.active-item]="vistaActual === 'cursos'" (click)="cambiarVista('cursos')">📘 Cursos</button>
+        <button [class.active-item]="vistaActual === 'paralelos'" (click)="cambiarVista('paralelos')">🏫 Paralelos</button>
+        <button [class.active-item]="vistaActual === 'asignaturas'" (click)="cambiarVista('asignaturas')">📚 Asignaturas</button>
+        <button [class.active-item]="vistaActual === 'actividades'" (click)="cambiarVista('actividades')">📋 Actividades</button>
+        <button [class.active-item]="vistaActual === 'curso-asignaturas'" (click)="cambiarVista('curso-asignaturas')">📖 Mallas/Cursos</button>
+      </div>
+    </div>
+
+    <!-- GRUPO 2: GESTIÓN DE PERSONAL Y ESTUDIANTES -->
+    <div class="dropdown">
+      <button class="nav-tab" [class.active]="['matriculas', 'asignaciones', 'usuarios'].includes(vistaActual)">👥 Gestión ▾</button>
+      <div class="dropdown-content">
+        <button [class.active-item]="vistaActual === 'matriculas'" (click)="cambiarVista('matriculas')">📝 Matrículas</button>
+        <button [class.active-item]="vistaActual === 'asignaciones'" (click)="cambiarVista('asignaciones')">👨‍🏫 Asignar Docentes</button>
+        @if (usuarioActual.rol === 'ADMIN') {
+          <button [class.active-item]="vistaActual === 'usuarios'" (click)="cambiarVista('usuarios')">👥 Usuarios (Accesos)</button>
+        }
+      </div>
+    </div>
+  }
   
-  <!-- Controles de búsqueda y actualización -->
-  <div style="text-align: center; margin-bottom: 20px; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
-    <input #cajaBusqueda type="text" class="input-busqueda" placeholder="Buscar por nombre..." (keyup.enter)="consultar(cajaBusqueda.value)">
-    <button type="button" class="btn-consultar" (click)="consultar(cajaBusqueda.value)">🔍 Consultar</button>
-    <button type="button" class="btn-actualizar" (click)="obtenerDatosDelBackend(); cajaBusqueda.value = ''">🔄 Actualizar</button>
-    <!-- Botón para crear uno nuevo -->
-    <button type="button" class="btn-actualizar" style="background-color: #48bb78; border-color: #48bb78;" (click)="crearServidor()">➕ Agregar</button>
+  <!-- GRUPO 3: DOCENCIA Y CALIFICACIONES -->
+  @if (usuarioActual.rol === 'ADMIN' || usuarioActual.rol === 'DIRECTOR' || usuarioActual.rol === 'DOCENTE') {
+    <div class="dropdown">
+      <button class="nav-tab" [class.active]="['panel-docente', 'modificar-nota', 'calificaciones'].includes(vistaActual)">👨‍🏫 Docencia ▾</button>
+      <div class="dropdown-content">
+        <button [class.active-item]="vistaActual === 'panel-docente'" (click)="cambiarVista('panel-docente')">👨‍🏫 Panel Docente</button>
+        <button [class.active-item]="vistaActual === 'calificaciones'" (click)="cambiarVista('calificaciones')">💯 Cuadro de Calificaciones</button>
+        <button [class.active-item]="vistaActual === 'modificar-nota'" (click)="cambiarVista('modificar-nota')">✏️ Modificar Nota (Auditoría)</button>
+      </div>
+    </div>
+  }
+
+  <!-- GRUPO 4: REPORTES Y RESULTADOS -->
+  @if (usuarioActual.rol === 'ADMIN' || usuarioActual.rol === 'DIRECTOR') {
+    <div class="dropdown">
+      <button class="nav-tab" [class.active]="['reporte-consolidado', 'ranking', 'solicitudes', 'auditoria'].includes(vistaActual)">📊 Reportes ▾</button>
+      <div class="dropdown-content">
+        <button [class.active-item]="vistaActual === 'ranking'" (click)="cambiarVista('ranking')">🏆 Ranking y Antigüedad</button>
+        <button [class.active-item]="vistaActual === 'reporte-consolidado'" (click)="cambiarVista('reporte-consolidado')" style="color: var(--success); font-weight: bold;">📋 Sábana Consolidada</button>
+        <button [class.active-item]="vistaActual === 'solicitudes'" (click)="cambiarVista('solicitudes')">✉️ Buzón de Solicitudes</button>
+        @if (usuarioActual.rol === 'ADMIN') {
+          <button [class.active-item]="vistaActual === 'auditoria'" (click)="cambiarVista('auditoria')" style="color: var(--danger); font-weight: bold;">🛡️ Auditoría de Cambios</button>
+        }
+      </div>
+    </div>
+  } @else {
+    <!-- Opciones sueltas para ESTUDIANTE y DOCENTE (No Admin) -->
+    <button class="nav-tab" [class.active]="vistaActual === 'solicitudes'" (click)="cambiarVista('solicitudes')">✉️ Solicitudes</button>
+    @if (usuarioActual.rol !== 'ESTUDIANTE') { <button class="nav-tab" [class.active]="vistaActual === 'ranking'" (click)="cambiarVista('ranking')">🏆 Ranking</button> }
+  }
+
+  <!-- GRUPO 5: CONFIGURACIÓN DEL SISTEMA (TI) -->
+  @if (usuarioActual.rol === 'ADMIN') {
+    <div class="dropdown">
+      <button class="nav-tab" [class.active]="['sincronizacion', 'parametros'].includes(vistaActual)">⚙️ Sistema ▾</button>
+      <div class="dropdown-content">
+        <button [class.active-item]="vistaActual === 'sincronizacion'" (click)="cambiarVista('sincronizacion')" style="color: var(--warning); font-weight: bold;">🔄 Sync Moodle</button>
+        <button [class.active-item]="vistaActual === 'parametros'" (click)="cambiarVista('parametros')">⚙️ Parámetros Base</button>
+      </div>
+    </div>
+  }
+
+  @if (usuarioActual.rol === 'ESTUDIANTE') {
+    <button class="nav-tab" [class.active]="vistaActual === 'mis-calificaciones'" (click)="cambiarVista('mis-calificaciones')">🎓 Mis Calificaciones</button>
+    <button class="nav-tab" [class.active]="vistaActual === 'ranking'" (click)="cambiarVista('ranking')">🏆 Ranking</button>
+  }
+</div>
+
+<!-- PANTALLA 1: RANKING Y ANTIGÜEDAD -->
+@if (vistaActual === 'ranking') {
+<div class="contenedor">
+  <h1 class="titulo">🏆 Reporte Final de Antigüedades</h1>
+  
+  <div class="actions-header">
+    <input type="text" class="input-busqueda" placeholder="Buscar por cédula o apellidos..." [(ngModel)]="terminoBusqueda" (keyup)="aplicarFiltros()">
+    <button type="button" class="btn-consultar" (click)="aplicarFiltros()">🔍 Consultar</button>
+    <button type="button" class="btn-actualizar" (click)="terminoBusqueda = ''; obtenerRanking();">🔄 Actualizar</button>
+    <button type="button" class="btn-alerta" (click)="descargarPDF()">📥 Descargar PDF</button>
   </div>
 
-  <table class="tabla-moderna">
-    <thead>
+  <!-- Filtros de Ranking -->
+  <div class="card flex-row" style="justify-content: center; background: #ebf8ff; border-color: #bee3f8; padding: 15px;">
+    <div class="form-group flex-1" style="max-width: 300px; margin-bottom: 0;">
+      <label style="color: var(--primary);">📘 Filtrar por Curso:</label>
+      <select [(ngModel)]="filtroCursoGrafico" (change)="aplicarFiltros()">
+        <option value="">-- Todos los Cursos --</option>
+        @for (c of cursos; track $index) {
+          <option [value]="c.nombre">{{ c.nombre }}</option>
+        }
+      </select>
+    </div>
+    <div class="form-group flex-1" style="max-width: 300px; margin-bottom: 0;">
+      <label style="color: var(--primary);">📚 Filtrar por Asignatura:</label>
+      <select [(ngModel)]="filtroMateriaGrafico" (change)="aplicarFiltros()">
+        <option value="">-- Promedio General (Todas) --</option>
+        @for (a of asignaturas; track $index) {
+          <option [value]="a.nombre">{{ a.nombre }}</option>
+        }
+      </select>
+    </div>
+  </div>
+
+  <!-- Contenedor de Gráficos Estadísticos -->
+  <div class="flex-row mb-4" style="justify-content: center; align-items: stretch;">
+    <div class="card flex-1" style="max-width: 350px; height: 350px; margin-bottom: 0;">
+      <h3 class="text-center text-muted" style="margin-top: 0; font-size: 1rem;">{{ filtroMateriaGrafico ? 'Rendimiento en: ' + filtroMateriaGrafico : 'Estado General de Alumnos' }}</h3>
+      <canvas id="graficoCanvas" [ngStyle]="{'display': rankingFiltrado.length > 0 ? 'block' : 'none'}"></canvas>
+      @if (rankingFiltrado.length === 0) {
+        <div style="height: 80%; display: flex; align-items: center; justify-content: center; color: #a0aec0; font-style: italic; text-align: center;">No hay datos de calificaciones para generar el gráfico.</div>
+      }
+    </div>
+    <div class="card flex-2" style="max-width: 600px; height: 350px; margin-bottom: 0;">
+      <h3 class="text-center text-muted" style="margin-top: 0; font-size: 1rem;">{{ filtroMateriaGrafico ? 'Promedio de la Materia por Curso' : 'Promedio General por Curso' }}</h3>
+      <canvas id="graficoPromediosCanvas" [ngStyle]="{'display': rankingFiltrado.length > 0 ? 'block' : 'none'}"></canvas>
+      @if (rankingFiltrado.length === 0) {
+        <div style="height: 80%; display: flex; align-items: center; justify-content: center; color: #a0aec0; font-style: italic; text-align: center;">Aún no existen promedios para mostrar.</div>
+      }
+    </div>
+  </div>
+
+  <div class="tabla-contenedor">
+    <table class="tabla-moderna">
+      <thead>
+        <tr>
+          <th class="text-center">Antigüedad</th>
+          <th class="text-center">Cédula</th>
+          <th>Apellidos y Nombres</th>
+          <th>Curso</th>
+          <th>Asignatura</th>
+          <th class="text-center">Promedio</th>
+          <th class="text-center">Condición</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (est of rankingFiltrado; track $index) {
+          <tr>
+            <td class="puesto text-center">#{{ est.antiguedad }}</td>
+            <td class="text-center">{{ est.cedula }}</td>
+            <td style="text-transform: uppercase; font-weight: 500;">{{ est.apellidos_nombres }}</td>
+            <td style="color: var(--primary);">{{ est.curso_nombre }}</td>
+            <td style="color: var(--warning); font-weight: 500;">{{ filtroMateriaGrafico ? filtroMateriaGrafico : 'TODAS (General)' }}</td>
+            <td class="text-center" style="font-size: 1.1rem; font-weight: bold;" [ngStyle]="{'color': est.promedio < 14 ? 'var(--danger)' : 'var(--success)'}">{{ est.promedio | number:'1.2-2' }}</td>
+            <td class="text-center">
+              <span class="badge" [ngClass]="est.estado === 'APTO PARA ASCENSO' ? 'aprobado' : 'reprobado'">
+                {{ est.estado }}
+              </span>
+            </td>
+          </tr>
+        } @empty {
+          <tr><td colspan="7" class="text-center text-muted" style="padding: 30px; font-style: italic;">Aún no hay suficientes calificaciones registradas para generar el ranking.</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+}
+
+<!-- PANTALLA 10: SOLICITUDES DE RECALIFICACIÓN -->
+@if (vistaActual === 'solicitudes') {
+<div class="contenedor">
+  <h1 class="titulo">✉️ Buzón de Solicitudes de Recalificación</h1>
+  <div class="actions-header">
+    <button type="button" class="btn-actualizar" (click)="obtenerSolicitudes()">🔄 Refrescar Datos</button>
+    <button type="button" class="btn-exito" (click)="abrirModalCrearSolicitud()">✨ Elevar Solicitud</button>
+  </div>
+  <div class="tabla-contenedor">
+    <table class="tabla-moderna">
+      <thead>
+        <tr>
+          <th>Estudiante</th>
+          <th>Materia / Nota Inicial</th>
+          <th class="text-center" style="width: 120px;">Estado</th>
+          <th class="text-center" style="width: 150px;">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (sol of solicitudes; track $index) {
+          @if (usuarioActual.rol !== 'ESTUDIANTE' || sol.cedula === usuarioActual.cedula) {
+          <tr>
+            <td style="text-transform: uppercase;"><b>{{ sol.est_apellidos }} {{ sol.est_nombres }}</b><br><small class="text-muted">C.I: {{ sol.cedula }}</small></td>
+            <td>{{ sol.asignatura_nombre }} <br><span style="font-weight: bold; color: var(--primary);">Nota objetada: {{ sol.nota }} / 20</span></td>
+            <td class="text-center">
+              <span class="badge" [ngClass]="sol.estado === 'PENDIENTE' ? 'pendiente' : (sol.estado === 'APROBADA' ? 'aprobado' : 'reprobado')">{{ sol.estado }}</span>
+            </td>
+            <td class="text-center">
+              <button class="btn-secundario" style="color: var(--primary);" (click)="abrirModalResponderSolicitud(sol)">{{ usuarioActual.rol === 'ESTUDIANTE' ? '👁️ Ver Detalle' : (sol.estado === 'PENDIENTE' ? '✏️ Responder' : '👁️ Ver Respuesta') }}</button>
+            </td>
+          </tr>
+          }
+        } @empty {
+          <tr><td colspan="4" class="text-center text-muted" style="padding: 30px; font-style: italic;">No hay solicitudes de recalificación registradas.</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+}
+
+<!-- MODAL SOLICITUDES -->
+@if (mostrarModalSolicitud) {
+<div class="modal-overlay">
+  <div class="modal-content">
+    <h2 class="modal-header">{{ modoModalSolicitud === 'crear' ? '✨ Nueva Solicitud de Recalificación' : '📋 Detalle de Solicitud' }}</h2>
+    
+    @if (modoModalSolicitud === 'crear') {
+      <div class="form-group mt-4">
+        <label>Seleccione la Calificación a Objetar:</label>
+        <select [(ngModel)]="nuevaSolicitud.calificacion_id">
+          <option value="" disabled selected>-- Elija una calificación --</option>
+          @for (c of calificaciones; track $index) {
+            @if (usuarioActual.rol !== 'ESTUDIANTE' || c.estudiante_id === usuarioActual.id) {
+              <option [value]="c.id">{{ c.asignatura_nombre }} - {{ c.actividad_nombre || 'Prom. Final' }} (Nota: {{ c.nota }})</option>
+            }
+          }
+        </select>
+      </div>
+      <div class="form-group mb-4">
+        <label>Motivo de la Recalificación:</label>
+        <textarea [(ngModel)]="nuevaSolicitud.motivo" placeholder="Explique brevemente por qué solicita la recalificación..." rows="3"></textarea>
+      </div>
+    } @else {
+      <div class="mt-4 mb-4" style="padding: 10px; background: var(--bg-color); border-radius: 8px; border-left: 4px solid var(--primary);">
+        <span style="font-weight: bold; color: var(--text-muted); font-size: 0.85rem;">Motivo expresado por el alumno:</span>
+        <p style="margin-top: 5px; color: #2d3748;">{{ nuevaSolicitud.motivo }}</p>
+      </div>
+      <div class="form-group">
+        <label>Respuesta del Docente / Director:</label>
+        <textarea [(ngModel)]="nuevaSolicitud.respuesta" [disabled]="usuarioActual.rol === 'ESTUDIANTE'" placeholder="Justificación de la resolución..." rows="3"></textarea>
+      </div>
+      <div class="form-group mb-4">
+        <label>Resolución Final:</label>
+        <select [(ngModel)]="nuevaSolicitud.estado" [disabled]="usuarioActual.rol === 'ESTUDIANTE'">
+          <option value="PENDIENTE" disabled>⏳ PENDIENTE</option>
+          <option value="APROBADA">✅ APROBADA (Procede modificación de nota)</option>
+          <option value="RECHAZADA">❌ RECHAZADA (Se mantiene la nota actual)</option>
+        </select>
+      </div>
+    }
+    <div class="modal-footer">
+      <button type="button" class="btn-secundario" (click)="cerrarModalSolicitud()">{{ modoModalSolicitud === 'responder' && usuarioActual.rol === 'ESTUDIANTE' ? 'Cerrar' : 'Cancelar' }}</button>
+      @if (modoModalSolicitud === 'crear' || usuarioActual.rol !== 'ESTUDIANTE') {
+        <button type="button" class="btn-exito" [disabled]="procesando" (click)="guardarSolicitud()">{{ procesando ? '⏳ Procesando...' : (modoModalSolicitud === 'crear' ? '🚀 Enviar Solicitud' : '💾 Guardar Respuesta') }}</button>
+      }
+    </div>
+  </div>
+</div>
+}
+
+<!-- PANTALLA 9: CALIFICACIONES -->
+@if (vistaActual === 'calificaciones') {
+<div class="contenedor">
+  <h1 class="titulo">💯 Registro de Calificaciones</h1>
+  <div class="actions-header">
+    <button type="button" class="btn-actualizar" (click)="obtenerCalificaciones()">🔄 Refrescar Datos</button>
+    @if (usuarioActual.rol !== 'ESTUDIANTE') {
+    <button type="button" class="btn-exito" (click)="abrirModalCalificacion(null)">✨ Ingresar Nota</button>
+    }
+  </div>
+  <div class="tabla-contenedor">
+    <table class="tabla-moderna">
+      <thead>
+        <tr>
+          <th>Paralelo</th>
+          <th>Asignatura</th>
+          <th>Estudiante</th>
+          <th class="text-center" style="width: 100px;">Nota / 20</th>
+          @if (usuarioActual.rol !== 'ESTUDIANTE') {
+          <th class="text-center" style="width: 100px;">Acciones</th>
+          }
+        </tr>
+      </thead>
+      <tbody>
+        @for (cal of calificaciones; track $index) {
+          <tr>
+            <td style="color: var(--primary); font-weight: 500;">{{ cal.curso_nombre }} - "{{ cal.paralelo_nombre }}"</td>
+            <td style="font-weight: 500;">{{ cal.asignatura_nombre }}</td>
+            <td style="text-transform: uppercase;">{{ cal.est_apellidos }} {{ cal.est_nombres }}</td>
+            <td class="text-center" style="font-size: 1.1rem; font-weight: bold;" [ngStyle]="{'color': cal.nota < 14 ? 'var(--danger)' : 'var(--success)'}">{{ cal.nota | number:'1.2-2' }}</td>
+            @if (usuarioActual.rol !== 'ESTUDIANTE') {
+            <td class="text-center">
+              @if (usuarioActual.rol === 'ADMIN' || usuarioActual.rol === 'DIRECTOR') {
+              <button class="btn-icon" (click)="abrirModalCalificacion(cal)" title="Modificar Nota">✏️</button>
+              <button class="btn-icon danger" (click)="eliminarCalificacion(cal.id)" title="Anular Nota">🗑️</button>
+              }
+            </td>
+            }
+          </tr>
+        } @empty {
+          <tr><td [attr.colspan]="usuarioActual.rol !== 'ESTUDIANTE' ? 5 : 4" class="text-center text-muted" style="padding: 30px; font-style: italic;">No hay calificaciones registradas.</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+}
+
+<!-- MODAL CALIFICACIONES -->
+@if (mostrarModalCalificacion) {
+<div class="modal-overlay">
+  <div class="modal-content">
+    <h2 class="modal-header">{{ nuevaCalificacion.id ? '✏️ Modificar Nota (Auditoría)' : '✨ Ingresar Calificación' }}</h2>
+    
+    <div class="flex-row mt-4">
+      <div class="form-group flex-1">
+        <label>Paralelo:</label>
+        <select [(ngModel)]="nuevaCalificacion.paralelo_id" [disabled]="nuevaCalificacion.id">
+          <option value="" disabled selected>-- Seleccione --</option>
+          @for (p of paralelos; track $index) { <option [value]="p.id">"{{ p.nombre }}" - {{ p.curso_nombre }}</option> }
+        </select>
+      </div>
+      <div class="form-group flex-1">
+        <label>Asignatura:</label>
+        <select [(ngModel)]="nuevaCalificacion.asignatura_id" [disabled]="nuevaCalificacion.id">
+          <option value="" disabled selected>-- Seleccione --</option>
+          @for (a of asignaturas; track $index) { <option [value]="a.id">{{ a.nombre }}</option> }
+        </select>
+      </div>
+    </div>
+    
+    <div class="flex-row">
+      <div class="form-group flex-2">
+        <label>Estudiante:</label>
+        <select [(ngModel)]="nuevaCalificacion.estudiante_id" [disabled]="nuevaCalificacion.id">
+          <option value="" disabled selected>{{ nuevaCalificacion.paralelo_id ? '-- Seleccione estudiante --' : 'Seleccione un paralelo primero' }}</option>
+          @for (mat of obtenerEstudiantesPorParalelo(nuevaCalificacion.paralelo_id); track $index) { <option [value]="mat.estudiante_id">{{ mat.apellidos }} {{ mat.nombres }}</option> }
+        </select>
+      </div>
+      <div class="form-group flex-1">
+        <label>Nota (/20):</label>
+        <input type="number" min="0" max="20" step="0.01" [(ngModel)]="nuevaCalificacion.nota" placeholder="Ej. 19.50" style="font-weight: bold; color: var(--primary);">
+      </div>
+    </div>
+
+    @if (nuevaCalificacion.id) {
+    <div class="form-group mb-4" style="padding: 10px; background: #fffaf0; border-left: 4px solid var(--warning); border-radius: 4px;">
+      <label style="color: var(--warning);">⚠️ Motivo de la Modificación:</label>
+      <input type="text" [(ngModel)]="nuevaCalificacion.motivo" placeholder="Ej. Error de digitación, solicitud aprobada...">
+    </div>
+    }
+
+    <div class="modal-footer">
+      <button type="button" class="btn-secundario" (click)="cerrarModalCalificacion()">Cancelar</button>
+      <button type="button" class="btn-exito" [disabled]="procesando" (click)="guardarCalificacion()">{{ procesando ? '⏳ Procesando...' : '💾 Guardar Nota' }}</button>
+    </div>
+  </div>
+</div>
+}
+
+<!-- PANTALLA 8: ASIGNACIÓN DE DOCENTES -->
+@if (vistaActual === 'asignaciones') {
+<div class="contenedor">
+  <h1 class="titulo">👨‍🏫 Asignación de Docentes a Materias</h1>
+  <div class="actions-header">
+    <button type="button" class="btn-actualizar" (click)="obtenerAsignaciones()">🔄 Refrescar Datos</button>
+    <button type="button" class="btn-exito" (click)="abrirModalAsignacion()">✨ Asignar Docente</button>
+  </div>
+  <div class="tabla-contenedor">
+    <table class="tabla-moderna">
+      <thead>
+        <tr>
+          <th>Paralelo</th>
+          <th>Asignatura</th>
+          <th class="text-center">Cédula</th>
+          <th>Docente</th>
+          <th class="text-center" style="width: 80px;">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (asig of asignaciones; track $index) {
+          <tr>
+            <td style="color: var(--primary); font-weight: 500;">{{ asig.curso_nombre }} - "{{ asig.paralelo_nombre }}"</td>
+            <td style="font-weight: 600;">{{ asig.asignatura_nombre }}</td>
+            <td class="text-center">{{ asig.cedula }}</td>
+            <td style="text-transform: uppercase;">{{ asig.apellidos }} {{ asig.nombres }}</td>
+            <td class="text-center">
+              <button class="btn-icon danger" (click)="eliminarAsignacion(asig.id)" title="Quitar Docente">🗑️</button>
+            </td>
+          </tr>
+        } @empty {
+          <tr><td colspan="5" class="text-center text-muted" style="padding: 30px; font-style: italic;">No hay docentes asignados en este momento.</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+}
+
+<!-- MODAL ASIGNACIÓN DOCENTES -->
+@if (mostrarModalAsignacion) {
+<div class="modal-overlay">
+  <div class="modal-content">
+    <h2 class="modal-header">✨ Asignar Docente a Materia</h2>
+    <div class="form-group mt-4">
+      <label>Seleccione el Paralelo:</label>
+      <select [(ngModel)]="nuevaAsignacion.paralelo_id">
+        <option value="" disabled selected>-- Elija un paralelo --</option>
+        @for (paralelo of paralelos; track $index) {
+          <option [value]="paralelo.id">{{ paralelo.curso_nombre }} - Paralelo "{{ paralelo.nombre }}"</option>
+        }
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Seleccione la Asignatura:</label>
+      <select [(ngModel)]="nuevaAsignacion.asignatura_id">
+        <option value="" disabled selected>-- Elija una materia --</option>
+        @for (asig of asignaturas; track $index) { <option [value]="asig.id">{{ asig.nombre }}</option> }
+      </select>
+    </div>
+    <div class="form-group mb-4">
+      <label>Seleccione el Docente:</label>
+      <select [(ngModel)]="nuevaAsignacion.docente_id">
+        <option value="" disabled selected>-- Elija un docente --</option>
+        @for (doc of docentes; track $index) { <option [value]="doc.id">{{ doc.cedula }} - {{ doc.apellidos }} {{ doc.nombres }}</option> }
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn-secundario" (click)="cerrarModalAsignacion()">Cancelar</button>
+      <button type="button" class="btn-exito" [disabled]="procesando" (click)="guardarAsignacion()">{{ procesando ? '⏳ Procesando...' : '💾 Asignar' }}</button>
+    </div>
+  </div>
+</div>
+}
+
+<!-- PANTALLA 7: MATRICULACIÓN -->
+@if (vistaActual === 'matriculas') {
+<div class="contenedor">
+  <h1 class="titulo">📝 Matrículas de Estudiantes</h1>
+  <div class="actions-header">
+    <button type="button" class="btn-actualizar" (click)="obtenerMatriculas()">🔄 Refrescar Datos</button>
+    <button type="button" class="btn-exito" (click)="abrirModalMatricula()">✨ Matricular Estudiante</button>
+  </div>
+  <div class="tabla-contenedor">
+    <table class="tabla-moderna">
+      <thead>
+        <tr>
+          <th class="text-center" style="width: 60px;">ID</th>
+          <th>Curso</th>
+          <th class="text-center">Paralelo</th>
+          <th class="text-center">Cédula</th>
+          <th>Estudiante</th>
+          <th class="text-center" style="width: 80px;">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (mat of matriculas; track $index) {
+          <tr>
+            <td class="text-center text-muted" style="font-weight: bold;">#{{ mat.id }}</td>
+            <td style="color: var(--primary); font-weight: 500;">{{ mat.curso_nombre }}</td>
+            <td class="text-center" style="font-weight: bold; font-size: 1.1rem;">"{{ mat.paralelo_nombre }}"</td>
+            <td class="text-center">{{ mat.cedula }}</td>
+            <td style="text-transform: uppercase;">{{ mat.apellidos }} {{ mat.nombres }}</td>
+            <td class="text-center">
+              <button class="btn-icon danger" (click)="eliminarMatricula(mat.id)" title="Anular Matrícula">🗑️</button>
+            </td>
+          </tr>
+        } @empty {
+          <tr><td colspan="6" class="text-center text-muted" style="padding: 30px; font-style: italic;">No hay estudiantes matriculados activos.</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+}
+
+<!-- MODAL MATRÍCULA -->
+@if (mostrarModalMatricula) {
+<div class="modal-overlay">
+  <div class="modal-content">
+    <h2 class="modal-header">✨ Matricular Estudiante</h2>
+    <div class="form-group mt-4">
+      <label>Seleccione el Paralelo:</label>
+      <select [value]="nuevaMatricula.paralelo_id" (change)="nuevaMatricula.paralelo_id = $any($event.target).value">
+        <option value="" disabled selected>-- Elija un paralelo --</option>
+        @for (paralelo of paralelos; track $index) {
+          <option [value]="paralelo.id">{{ paralelo.curso_nombre }} - Paralelo "{{ paralelo.nombre }}"</option>
+        }
+      </select>
+    </div>
+    <div class="form-group mb-4">
+      <label>Seleccione el Estudiante:</label>
+      <select [value]="nuevaMatricula.estudiante_id" (change)="nuevaMatricula.estudiante_id = $any($event.target).value">
+        <option value="" disabled selected>-- Elija un estudiante --</option>
+        @for (est of estudiantes; track $index) {
+          <option [value]="est.id">{{ est.cedula }} - {{ est.apellidos }} {{ est.nombres }}</option>
+        }
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secundario" (click)="cerrarModalMatricula()">Cancelar</button>
+      <button class="btn-exito" (click)="guardarMatricula()">💾 Matricular</button>
+    </div>
+  </div>
+</div>
+}
+
+<!-- PANTALLA 6: USUARIOS -->
+@if (vistaActual === 'usuarios') {
+<div class="contenedor">
+  <h1 class="titulo">👥 Catálogo de Usuarios</h1>
+  <div class="actions-header">
+    <button type="button" class="btn-actualizar" (click)="obtenerUsuarios()">🔄 Refrescar Datos</button>
+    <button type="button" class="btn-exito" (click)="abrirModalUsuario(null)">✨ Agregar Usuario</button>
+  </div>
+  <div class="tabla-contenedor">
+    <table class="tabla-moderna">
+      <thead>
+        <tr>
+          <th class="text-center" style="width: 80px;">Cédula</th>
+          <th>Apellidos y Nombres</th>
+          <th class="text-center">Rol</th>
+          <th class="text-center" style="width: 120px;">Estado</th>
+          <th class="text-center" style="width: 120px;">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (usuario of usuarios; track $index) {
+          <tr>
+            <td class="text-center" style="font-weight: bold;">{{ usuario.cedula }}</td>
+            <td style="text-transform: uppercase; font-weight: 500;">{{ usuario.apellidos }} {{ usuario.nombres }}</td>
+            <td class="text-center" style="font-weight: bold; color: var(--primary);">{{ usuario.rol }}</td>
+            <td class="text-center"><span class="badge aprobado">{{ usuario.estado }}</span></td>
+            <td class="text-center">
+              <button class="btn-icon" (click)="abrirModalUsuario(usuario)">✏️</button>
+              <button class="btn-icon danger" (click)="eliminarUsuario(usuario.id)">🗑️</button>
+            </td>
+          </tr>
+        } @empty {
+          <tr><td colspan="5" class="text-center text-muted" style="padding: 30px; font-style: italic;">No existen usuarios registrados.</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+}
+
+<!-- MODAL USUARIOS -->
+@if (mostrarModalUsuario) {
+<div class="modal-overlay">
+  <div class="modal-content" style="max-width: 600px;">
+    <h2 class="modal-header">{{ nuevoUsuario.id ? '✏️ Editar Usuario' : '✨ Registrar Nuevo Usuario' }}</h2>
+    <div class="flex-row mt-4">
+      <div class="form-group flex-1">
+        <label>Cédula:</label>
+        <input type="text" [(ngModel)]="nuevoUsuario.cedula" placeholder="1234567890">
+      </div>
+      <div class="form-group flex-1">
+        <label>Rol:</label>
+        <select [(ngModel)]="nuevoUsuario.rol">
+          <option value="" disabled selected>-- Seleccione un Rol --</option>
+          <option value="ESTUDIANTE">Estudiante</option>
+          <option value="DOCENTE">Docente</option>
+          <option value="DIRECTOR">Director</option>
+          <option value="ADMIN">Administrador</option>
+        </select>
+      </div>
+    </div>
+    <div class="flex-row">
+      <div class="form-group flex-1">
+        <label>Nombres:</label>
+        <input type="text" [(ngModel)]="nuevoUsuario.nombres" placeholder="Ej. Juan Carlos">
+      </div>
+      <div class="form-group flex-1">
+        <label>Apellidos:</label>
+        <input type="text" [(ngModel)]="nuevoUsuario.apellidos" placeholder="Ej. Perez">
+      </div>
+    </div>
+    <div class="form-group mb-4">
+      <label>Correo (Opcional):</label>
+      <input type="email" [(ngModel)]="nuevoUsuario.correo" placeholder="correo@policia.gob.ec">
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn-secundario" (click)="cerrarModalUsuario()">Cancelar</button>
+      <button type="button" class="btn-exito" [disabled]="procesando" (click)="guardarUsuario()">{{ procesando ? '⏳ Procesando...' : '💾 Guardar' }}</button>
+    </div>
+  </div>
+</div>
+}
+
+<!-- PANTALLA 4: ASIGNATURAS -->
+@if (vistaActual === 'asignaturas') {
+<div class="contenedor">
+  <h1 class="titulo">📚 Catálogo de Asignaturas</h1>
+  <div class="actions-header">
+    <button type="button" class="btn-actualizar" (click)="obtenerAsignaturas()">🔄 Refrescar Datos</button>
+    <button type="button" class="btn-exito" (click)="abrirModalAsignatura(null)">✨ Agregar Asignatura</button>
+  </div>
+  <div class="tabla-contenedor">
+    <table class="tabla-moderna">
+      <thead>
+        <tr>
+          <th class="text-center" style="width: 80px;">ID</th>
+          <th>Nombre de la Asignatura</th>
+          <th class="text-center" style="width: 150px;">Estado</th>
+          <th class="text-center" style="width: 150px;">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (asig of asignaturas; track $index) {
+          <tr>
+            <td class="text-center text-muted" style="font-weight: bold;">#{{ asig.id }}</td>
+            <td style="text-transform: uppercase; font-weight: 500;">{{ asig.nombre }}</td>
+            <td class="text-center"><span class="badge aprobado">{{ asig.estado }}</span></td>
+            <td class="text-center">
+              <button class="btn-icon" (click)="abrirModalAsignatura(asig)">✏️</button>
+              <button class="btn-icon danger" (click)="eliminarAsignatura(asig.id)">🗑️</button>
+            </td>
+          </tr>
+        } @empty {
+          <tr><td colspan="4" class="text-center text-muted" style="padding: 30px; font-style: italic;">No existen asignaturas registradas.</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+}
+
+<!-- MODAL ASIGNATURAS -->
+@if (mostrarModalAsignatura) {
+<div class="modal-overlay">
+  <div class="modal-content" style="max-width: 450px;">
+    <h2 class="modal-header">{{ nuevaAsignatura.id ? '✏️ Editar Asignatura' : '✨ Registrar Nueva Asignatura' }}</h2>
+    <div class="form-group mt-4 mb-4">
+      <label>Nombre de la Asignatura:</label>
+      <input type="text" [value]="nuevaAsignatura.nombre" (input)="nuevaAsignatura.nombre = $any($event.target).value" placeholder="Ej. Liderazgo Policial">
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn-secundario" (click)="cerrarModalAsignatura()">Cancelar</button>
+      <button type="button" class="btn-exito" [disabled]="procesando" (click)="guardarAsignatura()">{{ procesando ? '⏳ Procesando...' : '💾 Guardar' }}</button>
+    </div>
+  </div>
+</div>
+}
+
+<!-- PANTALLA 5: PARALELOS -->
+@if (vistaActual === 'paralelos') {
+<div class="contenedor">
+  <h1 class="titulo">🏫 Catálogo de Paralelos</h1>
+  <div class="actions-header">
+    <button type="button" class="btn-actualizar" (click)="obtenerParalelos()">🔄 Refrescar Datos</button>
+    <button type="button" class="btn-exito" (click)="abrirModalParalelo(null)">✨ Agregar Paralelo</button>
+  </div>
+  <div class="tabla-contenedor">
+    <table class="tabla-moderna">
+      <thead>
+        <tr>
+          <th class="text-center" style="width: 80px;">ID</th>
+          <th>Curso Pertenece</th>
+          <th class="text-center">Paralelo</th>
+          <th class="text-center" style="width: 150px;">Estado</th>
+          <th class="text-center" style="width: 150px;">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (paralelo of paralelos; track $index) {
+          <tr>
+            <td class="text-center text-muted" style="font-weight: bold;">#{{ paralelo.id }}</td>
+            <td style="font-weight: 500; color: var(--primary);">{{ paralelo.curso_nombre }}</td>
+            <td class="text-center" style="font-size: 1.2rem; font-weight: bold;">"{{ paralelo.nombre }}"</td>
+            <td class="text-center"><span class="badge aprobado">{{ paralelo.estado }}</span></td>
+            <td class="text-center">
+              <button class="btn-icon" (click)="abrirModalParalelo(paralelo)">✏️</button>
+              <button class="btn-icon danger" (click)="eliminarParalelo(paralelo.id)">🗑️</button>
+            </td>
+          </tr>
+        } @empty {
+          <tr><td colspan="5" class="text-center text-muted" style="padding: 30px; font-style: italic;">No existen paralelos registrados.</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+}
+
+<!-- MODAL PARALELOS -->
+@if (mostrarModalParalelo) {
+<div class="modal-overlay">
+  <div class="modal-content" style="max-width: 450px;">
+    <h2 class="modal-header">{{ nuevoParalelo.id ? '✏️ Editar Paralelo' : '✨ Registrar Nuevo Paralelo' }}</h2>
+    
+    <div class="form-group mt-4">
+      <label>Seleccione el Curso:</label>
+      <select [value]="nuevoParalelo.curso_id" (change)="nuevoParalelo.curso_id = $any($event.target).value">
+        <option value="" disabled selected>-- Elija un curso --</option>
+        @for (curso of cursos; track $index) {
+          <option [value]="curso.id">{{ curso.nombre }} ({{ curso.promocion_nombre }})</option>
+        }
+      </select>
+    </div>
+
+    <div class="form-group mb-4">
+      <label>Nombre / Letra del Paralelo:</label>
+      <input type="text" [value]="nuevoParalelo.nombre" (input)="nuevoParalelo.nombre = $any($event.target).value" placeholder="Ej. A, B o C">
+    </div>
+
+    <div class="modal-footer">
+      <button type="button" class="btn-secundario" (click)="cerrarModalParalelo()">Cancelar</button>
+      <button type="button" class="btn-exito" [disabled]="procesando" (click)="guardarParalelo()">{{ procesando ? '⏳ Procesando...' : '💾 Guardar' }}</button>
+    </div>
+  </div>
+</div>
+}
+
+<!-- PANTALLA 3: MÓDULO DE CURSOS -->
+@if (vistaActual === 'cursos') {
+<div class="contenedor">
+  <h1 class="titulo">📘 Catálogo de Cursos de Ascenso</h1>
+  
+  <div class="actions-header">
+    <button type="button" class="btn-actualizar" (click)="obtenerCursos()">🔄 Refrescar Datos</button>
+    <button type="button" class="btn-exito" (click)="abrirModalCurso(null)">✨ Agregar Curso</button>
+  </div>
+
+  <div class="tabla-contenedor">
+    <table class="tabla-moderna">
+      <thead>
+        <tr>
+          <th class="text-center" style="width: 60px;">ID</th>
+          <th>Promoción</th>
+          <th>Nombre del Curso</th>
+          <th>N° Autorización</th>
+          <th class="text-center">Inicio/Fin</th>
+          <th class="text-center">Estado Académico</th>
+          <th class="text-center">Acta</th>
+          <th class="text-center" style="width: 120px;">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (curso of cursos; track $index) {
+          <tr>
+            <td class="text-center text-muted" style="font-weight: bold;">#{{ curso.id }}</td>
+            <td style="font-weight: 500; color: var(--primary);">{{ curso.promocion_nombre }}</td>
+            <td style="text-transform: uppercase;">{{ curso.nombre }}</td>
+            <td>{{ curso.numero_autorizacion || 'N/A' }}</td>
+            <td class="text-center">
+                {{ curso.fecha_inicio ? (curso.fecha_inicio | date:'dd/MM/yy') : '--' }} <br>
+                {{ curso.fecha_fin ? (curso.fecha_fin | date:'dd/MM/yy') : '--' }}
+            </td>
+            <td class="text-center">
+              <span class="badge" [ngClass]="curso.estado_academico === 'EN ESPERA' ? '' : (curso.estado_academico === 'EN EJECUCIÓN' ? 'pendiente' : 'aprobado')">{{ curso.estado_academico }}</span>
+            </td>
+            <td class="text-center">
+              @if (curso.acta_resolucion_pdf) {
+                <button class="btn-secundario" style="padding: 4px 8px; font-size: 0.8rem; color: var(--primary);" (click)="verPDF(curso.acta_resolucion_pdf)" title="Ver Acta Original">📄 Ver</button>
+              } @else {
+                <span class="text-muted" style="font-size: 0.85rem; font-style: italic;">N/A</span>
+              }
+            </td>
+            <td class="text-center">
+              <button class="btn-icon" (click)="abrirModalCurso(curso)">✏️</button>
+              <button class="btn-icon danger" (click)="eliminarCurso(curso.id)">🗑️</button>
+            </td>
+          </tr>
+        } @empty {
+          <tr><td colspan="7" class="text-center text-muted" style="padding: 30px; font-style: italic;">Aún no existen cursos registrados en la base de datos.</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+}
+
+<!-- VENTANA EMERGENTE (MODAL) PARA CREAR CURSO -->
+@if (mostrarModalCurso) {
+<div class="modal-overlay">
+  <div class="modal-content" style="max-width: 600px;">
+    <h2 class="modal-header">{{ nuevoCurso.id ? '✏️ Editar Curso' : '✨ Registrar Nuevo Curso' }}</h2>
+    
+    <div class="flex-row mt-4">
+      <div class="form-group flex-1">
+        <label>Promoción:</label>
+        <select [(ngModel)]="nuevoCurso.promocion_id">
+          <option value="" disabled selected>-- Elija una promoción --</option>
+          @for (promo of promociones; track $index) { <option [value]="promo.id">{{ promo.nombre }} ({{ promo.anio }})</option> }
+        </select>
+      </div>
+      <div class="form-group flex-1">
+        <label>Nombre del Curso:</label>
+        <input type="text" [(ngModel)]="nuevoCurso.nombre" placeholder="Ej. Curso Directivos">
+      </div>
+    </div>
+
+    <div class="flex-row">
+      <div class="form-group flex-1">
+        <label>Estado Académico:</label>
+        <select [(ngModel)]="nuevoCurso.estado_academico">
+          <option value="" disabled selected>-- Seleccione Estado --</option>
+          @for (ep of estadosPromocion; track $index) {
+            <option [value]="ep.nombre">{{ ep.nombre }}</option>
+          }
+        </select>
+      </div>
+      <div class="form-group flex-1">
+        <label>N° Autorización:</label>
+        <input type="text" [(ngModel)]="nuevoCurso.numero_autorizacion" placeholder="Ej. DNE-2024-001">
+      </div>
+    </div>
+
+    <div class="flex-row mb-4">
+      <div class="form-group flex-1">
+        <label>Fecha Inicio:</label>
+        <input type="date" [(ngModel)]="nuevoCurso.fecha_inicio">
+      </div>
+      <div class="form-group flex-1">
+        <label>Fecha Fin:</label>
+        <input type="date" [(ngModel)]="nuevoCurso.fecha_fin">
+      </div>
+    </div>
+
+    <!-- Espacio preparado para la subida de PDF -->
+    <div class="form-group mb-4" style="background: var(--bg-color); padding: 15px; border-radius: 8px; border: 1px dashed var(--primary);">
+        <label style="color: var(--primary);">📄 Acta de Resolución (PDF):</label>
+        <input type="file" accept=".pdf" (change)="onArchivoSeleccionado($event)" style="border: none; background: transparent; padding: 0;">
+        @if (nuevoCurso.acta_resolucion_pdf) {
+          <div style="margin-top: 10px;">
+            <button type="button" class="btn-primario" style="font-size: 0.8rem; padding: 6px 12px;" (click)="verPDF(nuevoCurso.acta_resolucion_pdf)">👁️ Ver Documento Actualizado</button>
+          </div>
+        }
+    </div>
+
+    <div class="modal-footer">
+      <button type="button" class="btn-secundario" (click)="cerrarModalCurso()">Cancelar</button>
+      <button type="button" class="btn-exito" [disabled]="procesando" (click)="guardarCurso()">{{ procesando ? '⏳ Procesando...' : '💾 Guardar Curso' }}</button>
+    </div>
+  </div>
+</div>
+}
+
+<!-- PANTALLA 2: NUEVO MÓDULO DE PROMOCIONES (ACADEMIA) -->
+@if (vistaActual === 'promociones') {
+<div class="contenedor">
+  <h1 class="titulo">🎓 Catálogo de Promociones</h1>
+  
+  <div class="actions-header">
+    <button type="button" class="btn-actualizar" (click)="obtenerPromociones()">🔄 Refrescar Datos</button>
+    <button type="button" class="btn-exito" (click)="abrirModalPromocion(null)">✨ Agregar Promoción</button>
+  </div>
+
+  <div class="tabla-contenedor">
+    <table class="tabla-moderna">
+      <thead>
+        <tr>
+          <th class="text-center" style="width: 80px;">ID</th>
+          <th>Nombre de la Promoción / Curso</th>
+          <th class="text-center" style="width: 120px;">Año</th>
+          <th class="text-center" style="width: 150px;">Estado</th>
+          <th class="text-center" style="width: 150px;">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (promo of promociones; track $index) {
+          <tr>
+            <td class="text-center text-muted" style="font-weight: bold;">#{{ promo.id }}</td>
+            <td style="text-transform: uppercase; font-weight: 500;">{{ promo.nombre }}</td>
+            <td class="text-center" style="font-size: 1.1rem;">{{ promo.anio }}</td>
+            <td class="text-center">
+              <span class="badge aprobado">{{ promo.estado }}</span>
+            </td>
+            <td class="text-center">
+              <button class="btn-icon" (click)="abrirModalPromocion(promo)">✏️</button>
+              <button class="btn-icon danger" (click)="eliminarPromocion(promo.id)">🗑️</button>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="5" class="text-center text-muted" style="padding: 30px; font-style: italic;">
+              Aún no existen promociones registradas en la base de datos.
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+}
+
+<!-- VENTANA EMERGENTE (MODAL) PARA CREAR PROMOCIÓN -->
+@if (mostrarModalPromocion) {
+<div class="modal-overlay">
+  <div class="modal-content" style="max-width: 450px;">
+    <h2 class="modal-header">{{ nuevaPromocion.id ? '✏️ Editar Promoción' : '✨ Registrar Nueva Promoción' }}</h2>
+    
+    <div class="form-group mt-4">
+      <label>Nombre de la Promoción:</label>
+      <input type="text" [(ngModel)]="nuevaPromocion.nombre" placeholder="Ej. Promoción 86 de Directivos">
+    </div>
+
+    <div class="form-group mb-4">
+      <label>Año de la Promoción:</label>
+      <input type="number" [(ngModel)]="nuevaPromocion.anio">
+    </div>
+
+    <div class="modal-footer">
+      <button type="button" class="btn-secundario" (click)="cerrarModalPromocion()">Cancelar</button>
+      <button type="button" class="btn-exito" [disabled]="procesando" (click)="guardarPromocion()">{{ procesando ? '⏳ Procesando...' : '💾 Guardar' }}</button>
+    </div>
+  </div>
+</div>
+}
+
+<!-- PANTALLA 11: ASIGNACIÓN DE MATERIAS A CURSOS -->
+@if (vistaActual === 'curso-asignaturas') {
+<div class="contenedor">
+  <h1 class="titulo">📖 Asignación de Materias por Curso</h1>
+  <div class="actions-header">
+    <button type="button" class="btn-actualizar" (click)="obtenerCursoAsignaturas()">🔄 Refrescar Datos</button>
+    <button type="button" class="btn-exito" (click)="abrirModalCursoAsignatura()">✨ Asignar Materia a Curso</button>
+  </div>
+  <div class="tabla-contenedor">
+    <table class="tabla-moderna">
+      <thead>
+        <tr>
+          <th>Curso de Ascenso</th>
+          <th>Asignatura Asignada</th>
+          <th class="text-center" style="width: 80px;">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (ca of cursoAsignaturas; track $index) {
+          <tr>
+            <td style="color: var(--primary); font-weight: 500;">{{ ca.curso_nombre }}</td>
+            <td style="font-weight: bold;">{{ ca.asignatura_nombre }}</td>
+            <td class="text-center">
+              <button class="btn-icon danger" (click)="eliminarCursoAsignatura(ca.id)" title="Quitar Asignatura del Curso">🗑️</button>
+            </td>
+          </tr>
+        } @empty {
+          <tr><td colspan="3" class="text-center text-muted" style="padding: 30px; font-style: italic;">No hay asignaturas asignadas a los cursos.</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+}
+
+<!-- MODAL CURSO-ASIGNATURAS -->
+@if (mostrarModalCursoAsignatura) {
+<div class="modal-overlay">
+  <div class="modal-content">
+    <h2 class="modal-header">✨ Asignar Materia a Curso</h2>
+    <div class="form-group mt-4">
+      <label>Seleccione el Curso:</label>
+      <select [(ngModel)]="nuevoCursoAsignatura.curso_id">
+        <option value="" disabled selected>-- Elija un curso --</option>
+        @for (c of cursos; track $index) { <option [value]="c.id">{{ c.nombre }}</option> }
+      </select>
+    </div>
+    <div class="form-group mb-4">
+      <label>Seleccione la Asignatura a dictar:</label>
+      <select [(ngModel)]="nuevoCursoAsignatura.asignatura_id">
+        <option value="" disabled selected>-- Elija una asignatura --</option>
+        @for (a of asignaturas; track $index) { <option [value]="a.id">{{ a.nombre }}</option> }
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn-secundario" (click)="cerrarModalCursoAsignatura()">Cancelar</button>
+      <button type="button" class="btn-exito" [disabled]="procesando" (click)="guardarCursoAsignatura()">{{ procesando ? '⏳ Procesando...' : '💾 Asignar' }}</button>
+    </div>
+  </div>
+</div>
+}
+
+<!-- PANTALLA 12: AUDITORÍA DE NOTAS -->
+@if (vistaActual === 'auditoria') {
+<div class="contenedor">
+  <h1 class="titulo" style="color: var(--danger); border-bottom-color: var(--danger);">🛡️ Historial de Auditoría de Calificaciones</h1>
+  <div class="actions-header">
+    <button type="button" class="btn-actualizar" (click)="obtenerAuditoria()">🔄 Refrescar Datos</button>
+  </div>
+  <div class="tabla-contenedor" style="border: 2px solid #feb2b2;">
+    <table class="tabla-moderna">
+      <thead style="background-color: #fed7d7;">
+        <tr>
+          <th class="text-center" style="width: 140px; color: #9b2c2c;">Fecha y Hora</th>
+          <th style="color: #9b2c2c;">Modificado Por (Usuario)</th>
+          <th style="color: #9b2c2c;">Estudiante Afectado</th>
+          <th style="color: #9b2c2c;">Asignatura</th>
+          <th class="text-center" style="width: 100px; color: #9b2c2c;">Nota Ant.</th>
+          <th class="text-center" style="width: 100px; color: #9b2c2c;">Nota Nva.</th>
+          <th style="color: #9b2c2c;">Justificación / Motivo</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (aud of auditorias; track $index) {
+          <tr style="background-color: #fff5f5;">
+            <td class="text-center" style="font-weight: bold; color: #c53030; font-size: 0.85rem;">{{ aud.fecha | date:'dd/MM/yyyy HH:mm' }}</td>
+            <td style="text-transform: uppercase; color: #2d3748;"><b>{{ aud.admin_apellidos }} {{ aud.admin_nombres }}</b><br><small class="text-muted">C.I: {{ aud.admin_cedula }}</small></td>
+            <td style="text-transform: uppercase; font-weight: 500; color: #2d3748;">{{ aud.est_apellidos }} {{ aud.est_nombres }}</td>
+            <td style="font-weight: bold; color: var(--primary);">{{ aud.asignatura_nombre }}</td>
+            <td class="text-center" style="font-weight: bold; text-decoration: line-through; color: var(--text-muted);">{{ aud.nota_anterior | number:'1.2-2' }}</td>
+            <td class="text-center" style="font-weight: bold; color: var(--danger); font-size: 1.1rem;">{{ aud.nota_nueva | number:'1.2-2' }}</td>
+            <td style="color: var(--text-main); font-style: italic;">"{{ aud.motivo }}"</td>
+          </tr>
+        } @empty {
+          <tr><td colspan="7" class="text-center text-muted" style="padding: 30px; font-style: italic;">No existen registros de auditoría por modificaciones de notas.</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+}
+
+<!-- PANTALLA 13: ACTIVIDADES ACADÉMICAS -->
+@if (vistaActual === 'actividades') {
+<div class="contenedor">
+  <h1 class="titulo">📋 Catálogo de Actividades Académicas</h1>
+  <div class="actions-header">
+    <button type="button" class="btn-actualizar" (click)="obtenerActividades()">🔄 Refrescar Datos</button>
+    <button type="button" class="btn-exito" (click)="abrirModalActividad(null)">✨ Agregar Actividad</button>
+  </div>
+  <div class="tabla-contenedor">
+    <table class="tabla-moderna">
+      <thead>
+        <tr>
+          <th>Asignatura</th>
+          <th>Nombre de la Actividad</th>
+          <th class="text-center">Característica</th>
+          <th class="text-center">ID Moodle</th>
+          <th class="text-center" style="width: 100px;">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (act of actividades; track $index) {
+          <tr>
+            <td style="color: var(--primary); font-weight: bold;">{{ act.asignatura_nombre }}</td>
+            <td>{{ act.nombre }}<br><small class="text-muted">{{ act.descripcion }}</small></td>
+            <td class="text-center"><span class="badge">{{ act.caracteristica }}</span></td>
+            <td class="text-center">{{ act.id_moodle || 'N/A' }}</td>
+            <td class="text-center">
+              <button class="btn-icon" (click)="abrirModalActividad(act)">✏️</button>
+              <button class="btn-icon danger" (click)="eliminarActividad(act.id)">🗑️</button>
+            </td>
+          </tr>
+        } @empty {
+          <tr><td colspan="5" class="text-center text-muted" style="padding: 30px; font-style: italic;">No hay actividades registradas.</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+}
+
+<!-- MODAL ACTIVIDADES -->
+@if (mostrarModalActividad) {
+<div class="modal-overlay">
+  <div class="modal-content">
+    <h2 class="modal-header">{{ nuevaActividad.id ? '✏️ Editar Actividad' : '✨ Nueva Actividad' }}</h2>
+    <div class="flex-row mt-4">
+      <div class="form-group flex-2">
+        <label>Asignatura:</label>
+        <select [(ngModel)]="nuevaActividad.asignatura_id">
+          <option value="" disabled selected>-- Seleccione --</option>
+          @for (a of asignaturas; track $index) { <option [value]="a.id">{{ a.nombre }}</option> }
+        </select>
+      </div>
+      <div class="form-group flex-1">
+        <label>ID Moodle:</label>
+        <input type="text" [(ngModel)]="nuevaActividad.id_moodle" placeholder="Opcional">
+      </div>
+    </div>
+    <div class="flex-row">
+      <div class="form-group flex-2">
+        <label>Nombre de la Actividad:</label>
+        <input type="text" [(ngModel)]="nuevaActividad.nombre" placeholder="Ej. Tarea 1, Examen Final...">
+      </div>
+      <div class="form-group flex-1">
+        <label>Característica:</label>
+        <select [(ngModel)]="nuevaActividad.caracteristica">
+          <option value="" disabled selected>-- Seleccione Característica --</option>
+          @for (ca of caracteristicasActividad; track $index) {
+            <option [value]="ca.nombre">{{ ca.nombre }}</option>
+          }
+        </select>
+      </div>
+    </div>
+    <div class="form-group mb-4">
+      <label>Descripción / Instrucciones:</label>
+      <textarea [(ngModel)]="nuevaActividad.descripcion" rows="2"></textarea>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn-secundario" (click)="cerrarModalActividad()">Cancelar</button>
+      <button type="button" class="btn-exito" [disabled]="procesando" (click)="guardarActividad()">{{ procesando ? '⏳ Procesando...' : '💾 Guardar' }}</button>
+    </div>
+  </div>
+</div>
+}
+
+<!-- PANTALLA 16: PARÁMETROS -->
+@if (vistaActual === 'parametros') {
+<div class="contenedor">
+  <h1 class="titulo">⚙️ Gestión de Parametrizaciones</h1>
+  <div class="actions-header">
+    <button type="button" class="btn-actualizar" (click)="obtenerParametros()">🔄 Refrescar Datos</button>
+    <button type="button" class="btn-exito" (click)="abrirModalParametro(null)">✨ Nuevo Parámetro</button>
+  </div>
+  <div class="tabla-contenedor">
+    <table class="tabla-moderna">
+      <thead>
+        <tr>
+          <th class="text-center" style="width: 80px;">ID</th>
+          <th>Tipo de Catálogo</th>
+          <th>Valor / Nombre</th>
+          <th class="text-center" style="width: 100px;">Estado</th>
+          <th class="text-center" style="width: 120px;">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (p of parametros; track $index) {
+          <tr>
+            <td class="text-center text-muted" style="font-weight: bold;">#{{ p.id }}</td>
+            <td style="font-weight: 500; color: var(--primary);">{{ p.tipo === 'ESTADO_PROMOCION' ? 'Estado de Promoción/Curso' : 'Característica de Actividad' }}</td>
+            <td style="text-transform: uppercase; font-weight: bold;">{{ p.nombre }}</td>
+            <td class="text-center"><span class="badge aprobado">{{ p.estado }}</span></td>
+            <td class="text-center">
+              <button class="btn-icon" (click)="abrirModalParametro(p)">✏️</button>
+              <button class="btn-icon danger" (click)="eliminarParametro(p.id)">🗑️</button>
+            </td>
+          </tr>
+        } @empty {
+          <tr><td colspan="5" class="text-center text-muted" style="padding: 30px; font-style: italic;">No existen parámetros registrados.</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+}
+
+<!-- MODAL PARÁMETROS -->
+@if (mostrarModalParametro) {
+<div class="modal-overlay">
+  <div class="modal-content" style="max-width: 450px;">
+    <h2 class="modal-header">{{ nuevoParametro.id ? '✏️ Editar Parámetro' : '✨ Nuevo Parámetro' }}</h2>
+    <div class="form-group mt-4">
+      <label>Tipo de Catálogo:</label>
+      <select [(ngModel)]="nuevoParametro.tipo">
+        <option value="ESTADO_PROMOCION">Estado de Promoción/Curso</option>
+        <option value="CARACTERISTICA_ACTIVIDAD">Característica de Actividad</option>
+      </select>
+    </div>
+    <div class="form-group mb-4">
+      <label>Valor / Nombre:</label>
+      <input type="text" [(ngModel)]="nuevoParametro.nombre" placeholder="Ej. EN EJECUCIÓN, CUANTITATIVA..." style="text-transform: uppercase;">
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secundario" (click)="cerrarModalParametro()">Cancelar</button>
+      <button type="button" class="btn-exito" [disabled]="procesando" (click)="guardarParametro()">{{ procesando ? '⏳ Guardando...' : '💾 Guardar' }}</button>
+    </div>
+  </div>
+</div>
+}
+
+<!-- PANTALLA 14: SINCRONIZACIÓN MANUAL MOODLE -->
+@if (vistaActual === 'sincronizacion') {
+<div class="contenedor">
+  <h1 class="titulo" style="color: var(--warning); border-bottom-color: var(--warning);">🔄 Plataforma de Sincronización Moodle</h1>
+  
+  <div class="card">
+    <div class="flex-row">
+      <div class="form-group flex-1">
+        <label>Promoción / Categoría Nivel 3:</label>
+        <select [(ngModel)]="parametrosSync.promocion_id">
+          <option value="" disabled selected>-- Seleccione Promoción --</option>
+          @for (p of promociones; track $index) { <option [value]="p.id">{{ p.nombre }}</option> }
+        </select>
+      </div>
+      <div class="form-group flex-1">
+        <label>Tipo de Recurso a Sincronizar:</label>
+        <select [(ngModel)]="parametrosSync.tipo_recurso">
+          <option value="" disabled selected>-- Seleccione Tipo --</option>
+          <option value="ESTUDIANTES">Estudiantes Matriculados</option>
+          <option value="CURSOS">Cursos y Paralelos</option>
+          <option value="ACTIVIDADES">Actividades y Categorías</option>
+          <option value="CALIFICACIONES">Calificaciones</option>
+        </select>
+      </div>
+      <div class="form-group flex-1" style="min-width: 150px;">
+        <label>Número ID Moodle:</label>
+        <input type="text" [(ngModel)]="parametrosSync.id_moodle" placeholder="Ej. 405">
+      </div>
+      <div class="form-group" style="display: flex; align-items: flex-end;">
+        <button type="button" class="btn-alerta" [disabled]="procesando" (click)="ejecutarSincronizacion()" style="padding: 12px 25px; height: 42px;">{{ procesando ? '⏳ Conectando...' : '🔌 Ejecutar Sincronización' }}</button>
+      </div>
+    </div>
+  </div>
+
+  <h2 style="color: var(--text-muted); margin-bottom: 15px; font-size: 1.2rem;">📊 Reporte de Resultados de Sincronización</h2>
+  <div class="tabla-contenedor">
+    <table class="tabla-moderna">
+      <thead>
+        <tr>
+          <th class="text-center">Número ID</th>
+          <th>Tipo de Recurso</th>
+          <th>Descripción</th>
+          <th class="text-center">Característica</th>
+          <th class="text-center">Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (rep of reporteSincronizacion; track $index) {
+          <tr>
+            <td class="text-center text-muted" style="font-weight: bold;">{{ rep.id_moodle }}</td>
+            <td style="font-weight: bold; color: var(--primary);">{{ rep.tipo_recurso }}</td>
+            <td>{{ rep.descripcion }}</td>
+            <td class="text-center">{{ rep.caracteristica }}</td>
+            <td class="text-center"><span style="color: var(--success); font-weight: bold;">{{ rep.estado }}</span></td>
+          </tr>
+        } @empty {
+          <tr><td colspan="5" class="text-center text-muted" style="padding: 30px; font-style: italic;">Inicie una sincronización para visualizar el reporte.</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+}
+
+<!-- PANTALLA 15: PANEL DOCENTE (Sincronización por Actividad) -->
+@if (vistaActual === 'panel-docente') {
+<div class="contenedor">
+  <h1 class="titulo">👨‍🏫 Panel Docente - Sincronización de Actividades</h1>
+
+  <!-- Controles de Filtro en Cascada -->
+  <div class="card">
+    <div class="flex-row">
+      <div class="form-group flex-1">
+        <label>1. Promoción (Nivel 3):</label>
+        <select [(ngModel)]="docenteFiltros.promocion_id" (change)="alSeleccionarPromocionDocente()">
+          <option value="" disabled selected>-- Seleccione Promoción --</option>
+          @for (p of docentePromociones; track $index) {
+            <option [value]="p.id">{{ p.nombre }}</option>
+          }
+        </select>
+      </div>
+      <div class="form-group flex-1">
+        <label>2. Asignatura (Nivel 5):</label>
+        <select [(ngModel)]="docenteFiltros.asignatura_id" (change)="alSeleccionarAsignaturaDocente()" [disabled]="!docenteFiltros.promocion_id">
+          <option value="" disabled selected>-- Seleccione Asignatura --</option>
+          @for (a of docenteAsignaturas; track $index) {
+            <option [value]="a.id">{{ a.nombre }}</option>
+          }
+        </select>
+      </div>
+      <div class="form-group flex-1">
+        <label>3. Paralelo (Curso):</label>
+        <select [(ngModel)]="docenteFiltros.paralelo_id" (change)="alSeleccionarParaleloDocente()" [disabled]="!docenteFiltros.asignatura_id">
+          <option value="" disabled selected>-- Seleccione --</option>
+          @for (p of docenteParalelos; track $index) {
+            <option [value]="p.id">"{{ p.nombre }}" - {{ p.curso_nombre }}</option>
+          }
+        </select>
+      </div>
+      <div class="form-group flex-1" style="min-width: 220px;">
+        <label>4. Actividad Moodle:</label>
+        <select [(ngModel)]="docenteFiltros.actividad_id" [disabled]="!docenteFiltros.paralelo_id">
+          <option value="" disabled selected>-- Seleccione Actividad --</option>
+          @for (act of docenteActividades; track $index) {
+            <option [value]="act.id" [style.color]="act.sincronizada ? '#38a169' : '#4a5568'">{{ act.nombre }} {{ act.sincronizada ? '✅ (Completada)' : '' }}</option>
+          }
+        </select>
+      </div>
+    </div>
+    
+    <div class="actions-header" style="justify-content: flex-end; margin-bottom: 0; margin-top: 10px;">
+      <button type="button" class="btn-primario" [disabled]="!docenteFiltros.paralelo_id" onclick="alert('Generación de reporte en desarrollo...')">📊 Generar Reporte PDF</button>
+      
+      <button type="button" class="btn-exito" [disabled]="procesando || !docenteFiltros.paralelo_id" (click)="calcularPromedioAsignatura()">
+        {{ procesando ? '⏳ Calculando...' : '🧮 Calcular Promedio Asignatura' }}
+      </button>
+
+      <button type="button" class="btn-alerta" [disabled]="procesando || !docenteFiltros.actividad_id" (click)="sincronizarActividadDocente()">
+        {{ procesando ? '⏳ Sincronizando...' : '🔄 Sincronizar Calificaciones' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Tabla de Doble Entrada (Estudiantes x Actividades) -->
+  @if (docenteFiltros.paralelo_id) {
+  <div class="tabla-contenedor">
+    <table class="tabla-moderna" style="min-width: 900px; margin-bottom: 0; border: none;">
+      <thead style="background-color: var(--primary); color: white;">
+        <tr>
+          <th class="text-center" style="width: 50px; background-color: transparent; color: white; border-color: #4299e1;">N°</th>
+          <th class="text-center" style="width: 120px; background-color: transparent; color: white; border-color: #4299e1;">Cédula</th>
+          <th style="min-width: 250px; background-color: transparent; color: white; border-color: #4299e1;">Estudiante</th>
+          @for (act of docenteActividades; track $index) {
+            <th class="text-center" style="min-width: 130px; border-left: 1px solid #4299e1; background-color: transparent; color: white; border-color: #4299e1;">
+              <div style="font-size: 0.85rem; line-height: 1.3;">
+                {{ act.nombre }}<br>
+                <span style="font-size: 0.75rem; font-weight: normal; color: #bee3f8;">{{ act.sincronizada ? '✅ Sincronizada' : '⏳ Pendiente' }}</span>
+              </div>
+            </th>
+          }
+          <th class="text-center" style="min-width: 100px; border-left: 2px solid #cbd5e0; background-color: #2c5282; color: white; border-bottom-color: #4299e1;">Promedio</th>
+          <th class="text-center" style="min-width: 120px; background-color: #2c5282; color: white; border-bottom-color: #4299e1;">Observación</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (est of docenteEstudiantes; track $index) {
+          <tr>
+            <td class="text-center text-muted" style="font-weight: bold;">{{ $index + 1 }}</td>
+            <td class="text-center">{{ est.cedula }}</td>
+            <td style="text-transform: uppercase; font-weight: 500; color: var(--text-main);">{{ est.apellidos }} {{ est.nombres }}</td>
+            
+            @for (act of docenteActividades; track $index) {
+              <td class="text-center" style="font-weight: bold; font-size: 1.1rem; border-left: 1px solid var(--border-color); background-color: {{ obtenerNotaEstudianteActividad(est.estudiante_id, act.id) ? '#f0fff4' : '#fff5f5' }}; color: {{ obtenerNotaEstudianteActividad(est.estudiante_id, act.id) ? 'var(--success)' : '#cbd5e0' }};">
+                {{ obtenerNotaEstudianteActividad(est.estudiante_id, act.id) || '-' }}
+              </td>
+            }
+            <td class="text-center" style="font-weight: bold; font-size: 1.2rem; border-left: 2px solid #cbd5e0; background-color: var(--secondary); color: var(--primary);">
+              {{ obtenerPromedioFinalEstudiante(est.estudiante_id)?.nota || '-' }}
+            </td>
+            <td class="text-center" style="background-color: var(--secondary);">
+              <span [ngClass]="obtenerClaseObservacion(obtenerPromedioFinalEstudiante(est.estudiante_id)?.observacion)">
+                {{ obtenerPromedioFinalEstudiante(est.estudiante_id)?.observacion || '' }}
+              </span>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td [attr.colspan]="5 + docenteActividades.length" class="text-center text-muted" style="padding: 30px; font-style: italic;">No hay estudiantes matriculados en este paralelo.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  } @else {
+    <div class="card text-center text-muted" style="border: 2px dashed var(--border-color); padding: 50px;">
+      <p style="font-size: 1.2rem; margin: 0;">👈 Seleccione una promoción, asignatura y paralelo para visualizar el cuadro de calificaciones.</p>
+    </div>
+  }
+</div>
+}
+
+<!-- PANTALLA 17: MODIFICAR NOTA (DOCENTE) -->
+@if (vistaActual === 'modificar-nota') {
+<div class="contenedor">
+  <h1 class="titulo">✏️ Modificación y Corrección de Calificaciones</h1>
+
+  <div class="card">
+    <h2 style="margin-top: 0; color: var(--text-main); font-size: 1.2rem; border-bottom: 2px solid var(--border-color); padding-bottom: 10px;">1. Búsqueda Rápida de Estudiante</h2>
+    <div class="flex-row mt-4">
+      <div class="form-group flex-1" style="max-width: 300px;">
+        <label>Número de Cédula:</label>
+        <div style="display: flex; gap: 10px;">
+          <input type="text" [(ngModel)]="datosModificacion.cedula" (keyup.enter)="buscarEstudiantePorCedulaParaModificacion()" placeholder="Ej. 1234567890">
+          <button class="btn-primario" (click)="buscarEstudiantePorCedulaParaModificacion()">🔍 Buscar</button>
+        </div>
+      </div>
+      @if (datosModificacion.estudianteEncontrado) {
+      <div style="flex: 2; display: flex; flex-direction: column; justify-content: center; padding-left: 20px; border-left: 2px dashed #cbd5e0;">
+        <span style="color: var(--text-main);"><b>Estudiante:</b> <span style="text-transform: uppercase;">{{ datosModificacion.estudianteEncontrado.nombres }} {{ datosModificacion.estudianteEncontrado.apellidos }}</span></span>
+        <span style="color: var(--text-main);"><b>Grado/Curso:</b> {{ datosModificacion.estudianteEncontrado.curso_nombre }}</span>
+        <span style="color: var(--success); font-weight: bold;">✓ Promoción en estado "En ejecución"</span>
+      </div>
+      }
+    </div>
+  </div>
+
+  @if (datosModificacion.estudianteEncontrado) {
+  <div class="card">
+    <h2 style="margin-top: 0; color: var(--text-main); font-size: 1.2rem; border-bottom: 2px solid var(--border-color); padding-bottom: 10px;">2. Selección de Actividad a Modificar</h2>
+    <div class="flex-row mt-4">
+      <div class="form-group flex-1">
+        <label>Asignatura (Nivel 5):</label>
+        <select [(ngModel)]="datosModificacion.asignatura_id" (change)="alSeleccionarAsignaturaModificacion()">
+          <option value="" disabled selected>-- Seleccione Asignatura Relacionada --</option>
+          @for (a of asignaturasModificacion; track $index) { <option [value]="a.id">{{ a.nombre }}</option> }
+        </select>
+      </div>
+      <div class="form-group flex-1">
+        <label>Recurso Curso (Asig + Paralelo):</label>
+        <input type="text" [value]="datosModificacion.asignatura_id ? datosModificacion.estudianteEncontrado.paralelo_nombre : ''" disabled style="background: var(--secondary); color: var(--text-muted); font-weight: bold;">
+      </div>
+      <div class="form-group flex-1">
+        <label>Actividad Asignada:</label>
+        <select [(ngModel)]="datosModificacion.actividad_id" (change)="alSeleccionarActividadModificacion()" [disabled]="!datosModificacion.asignatura_id">
+          <option value="" disabled selected>-- Elija la actividad --</option>
+          @for (act of actividadesModificacion; track $index) { <option [value]="act.id">{{ act.nombre }}</option> }
+        </select>
+      </div>
+    </div>
+  </div>
+  }
+
+  @if (datosModificacion.calificacionActual) {
+  <div class="card">
+    <h2 style="margin-top: 0; color: var(--text-main); font-size: 1.2rem; border-bottom: 2px solid var(--border-color); padding-bottom: 10px;">3. Datos para Autorización y Respaldo</h2>
+    <div class="flex-row mt-4">
+      <div class="form-group flex-1">
+        <label>Calificación Actual Registrada:</label>
+        <input type="text" [value]="datosModificacion.calificacionActual.nota | number:'1.3-3'" disabled style="background: #fff5f5; color: var(--danger); font-weight: bold; font-size: 1.3rem; text-align: center;">
+      </div>
+      <div class="form-group flex-1">
+        <label style="color: var(--primary);">Nueva Calificación:</label>
+        <input type="number" step="0.001" [(ngModel)]="datosModificacion.nota_nueva" placeholder="Ej. 19.500" style="border: 2px solid var(--primary); font-weight: bold; font-size: 1.3rem; text-align: center; color: var(--primary);">
+      </div>
+      <div class="form-group flex-2">
+        <label>Documento de Respaldo Académico (PDF):</label>
+        <input type="file" accept=".pdf" style="padding: 9px; border: 2px dashed var(--border-color); background: transparent;">
+      </div>
+    </div>
+    <div class="form-group mt-4">
+      <label>Observación / Justificación Legal (Máx. 500 caracteres):</label>
+      <textarea [(ngModel)]="datosModificacion.observacion" maxlength="500" rows="3" placeholder="Describa el motivo técnico por el cual se aplica la corrección (Ej. Recalificación aprobada mediante memorando N°...)" style="resize: vertical;"></textarea>
+    </div>
+      <div class="actions-header" style="justify-content: flex-end; border-top: 1px solid var(--border-color); padding-top: 15px; margin-bottom: 0;">
+        <button type="button" class="btn-exito" [disabled]="procesando" (click)="guardarModificacionNota()">
+          {{ procesando ? '⏳ Procesando...' : '💾 Modificar Calificación Definitivamente' }}
+        </button>
+      </div>
+  </div>
+  }
+
+  <!-- TABLA HISTÓRICA DEL DOCENTE -->
+  <h2 style="color: #4a5568; margin-bottom: 15px;">📜 Historial de Modificaciones (Auditoría Personal)</h2>
+  <table class="tabla-moderna" style="border: 2px solid #cbd5e0;">
+    <thead style="background-color: #2d3748;">
       <tr>
-        <th style="text-align: center;">Puesto</th>
-        <th style="text-align: left;">Servidor</th>
-        <th style="text-align: center;">Promedio</th>
-        <th style="text-align: center;">Condición</th>
-        <!-- Nueva columna para las acciones -->
-        <th style="text-align: center;">Acciones</th>
+        <th style="text-align: left; color: white; width: 120px;">Fecha y Hora</th>
+        <th style="text-align: left; color: white;">Grado y Estudiante</th>
+        <th style="text-align: left; color: white;">Asignatura / Paralelo</th>
+        <th style="text-align: center; color: white; width: 100px;">Nota Ant.</th>
+        <th style="text-align: center; color: white; width: 100px;">Nota Nva.</th>
+        <th style="text-align: left; color: white; min-width: 250px;">Observación de Respaldo</th>
       </tr>
     </thead>
     <tbody>
-      @for (servidor of servidoresFiltrados; track $index; let i = $index) {
-        <tr>
-          <td class="puesto" style="text-align: center;">{{ i + 1 }}</td>
-          <td style="text-transform: uppercase; font-weight: 500;">{{ servidor.nombre }}</td>
-          <td style="text-align: center; font-size: 1.1rem;">{{ servidor.promedio | number:'1.2-2' }}</td>
-          
-          <td style="text-align: center;">
-            <span class="badge" [ngClass]="servidor.estado === 'APTO PARA ASCENSO' ? 'aprobado' : 'reprobado'">
-              {{ servidor.estado }}
-            </span>
-          </td>
-          <!-- Botones de Editar y Eliminar -->
-          <td style="text-align: center;">
-            <button style="cursor: pointer; margin-right: 8px; padding: 4px 8px;" (click)="editarServidor(servidor)">✏️ Editar</button>
-            <button style="cursor: pointer; padding: 4px 8px; color: #e53e3e;" (click)="eliminarServidor(servidor.nombre)">🗑️ Eliminar</button>
-          </td>
+      @for (hist of historialModificacionesDocente; track $index) {
+        <tr style="background-color: white;">
+          <td style="font-size: 0.85rem; color: #718096; font-weight: bold;">{{ hist.fecha | date:'dd/MM/yy HH:mm' }}</td>
+          <td style="text-transform: uppercase;"><b>{{ hist.est_apellidos }} {{ hist.est_nombres }}</b></td>
+          <td style="color: #2b6cb0; font-weight: 500;">{{ hist.asignatura_nombre }}</td>
+          <td style="text-align: center; font-weight: bold; color: #e53e3e; text-decoration: line-through;">{{ hist.nota_anterior | number:'1.3-3' }}</td>
+          <td style="text-align: center; font-weight: bold; color: #38a169; font-size: 1.1rem;">{{ hist.nota_nueva | number:'1.3-3' }}</td>
+          <td style="font-size: 0.9rem; color: #4a5568; font-style: italic;">"{{ hist.motivo }}"</td>
         </tr>
       } @empty {
-        <tr>
-          <td colspan="5" style="padding: 30px; text-align: center; color: #718096; font-style: italic;">
-            No hay datos en la base de datos (El arreglo está vacío).
-          </td>
-        </tr>
+        <tr><td colspan="6" style="padding: 30px; text-align: center; color: #718096; font-style: italic;">Usted no registra modificaciones en el historial de auditoría.</td></tr>
       }
     </tbody>
   </table>
 </div>
+}
+
+<!-- PANTALLA 18: REPORTE CONSOLIDADO (SÁBANA DE NOTAS) -->
+@if (vistaActual === 'reporte-consolidado') {
+<div class="contenedor">
+  <h1 class="titulo">📋 Reporte Consolidado Académico (Sábana de Calificaciones)</h1>
+  
+  <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; margin-bottom: 25px; display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap;">
+    <div style="flex: 1; min-width: 250px;">
+      <label style="display: block; margin-bottom: 8px; font-weight: bold; color: #4a5568;">Seleccione la Promoción a Evaluar:</label>
+      <select [(ngModel)]="filtroReportePromocion" style="width: 100%; padding: 12px; border: 2px solid #cbd5e0; border-radius: 8px; outline: none; cursor: pointer; font-size: 1rem;">
+        <option value="" disabled selected>-- Todas las promociones --</option>
+        @for (p of promociones; track $index) {
+          <option [value]="p.id">{{ p.nombre }} (Estado: {{ p.estado }})</option>
+        }
+      </select>
+    </div>
+    <button type="button" [disabled]="procesando" (click)="generarDataReporteConsolidado()" style="padding: 12px 25px; background-color: #2b6cb0; color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 15px; cursor: pointer;">{{ procesando ? '⏳ Computando...' : '🔍 Generar Sábana' }}</button>
+    @if (reporteData.length > 0) {
+      <button type="button" (click)="exportarExcelReporte()" style="padding: 12px 25px; background-color: #38a169; color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 15px; cursor: pointer;">📊 Exportar Excel</button>
+      <button type="button" (click)="exportarPDFReporte()" style="padding: 12px 25px; background-color: #e53e3e; color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 15px; cursor: pointer;">📥 Exportar PDF</button>
+      <button type="button" [disabled]="procesando" (click)="notificarPromediosFinales()" style="padding: 12px 25px; background-color: #805ad5; color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 15px; cursor: pointer;">📧 Notificar Alumnos</button>
+    }
+  </div>
+
+  @if (reporteData.length > 0) {
+  <div style="position: relative; overflow-x: auto; background: white; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; padding-bottom: 10px;">
+    
+    <!-- MARCA DE AGUA VISUAL EN PANTALLA -->
+    <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; display: flex; justify-content: center; align-items: center; overflow: hidden;">
+      <span style="transform: rotate(-30deg); font-size: 5vw; color: rgba(0,0,0,0.04); white-space: nowrap; font-weight: bold;">GENERADO POR: {{ usuarioActual?.nombres }} {{ usuarioActual?.apellidos }}</span>
+    </div>
+
+    <table id="tabla-reporte-consolidado" class="tabla-moderna" style="min-width: 1500px; margin-bottom: 0; border: none; position: relative; z-index: 1;">
+      <thead style="background-color: #2c5282; color: white;">
+        <tr>
+          <th rowspan="2" style="text-align: center; border-right: 1px solid #4299e1; vertical-align: middle;">Ant.</th>
+          <th rowspan="2" style="text-align: center; border-right: 1px solid #4299e1; vertical-align: middle;">Cédula</th>
+          <th rowspan="2" style="text-align: left; min-width: 250px; border-right: 2px solid #2b6cb0; vertical-align: middle;">Estudiante</th>
+          @for (asig of reporteAsignaturas; track $index) {
+            <th [attr.colspan]="asig.actividades.length + 3" style="text-align: center; border-right: 2px solid #2b6cb0; border-bottom: 1px solid #4299e1;">
+              <div style="font-size: 0.95rem;">{{ asig.nombre }}</div>
+              <div style="font-size: 0.75rem; color: #bee3f8; font-weight: normal;">({{ asig.esCualitativa ? 'CUALITATIVA' : 'CUANTITATIVA' }})</div>
+            </th>
+          }
+          <th rowspan="2" style="text-align: center; vertical-align: middle; background-color: #1a365d;">Promedio<br>Final</th>
+          <th rowspan="2" style="text-align: center; vertical-align: middle; background-color: #1a365d;">Observación<br>General</th>
+        </tr>
+        <tr style="background-color: #2b6cb0;">
+          @for (asig of reporteAsignaturas; track $index) {
+            @for (act of asig.actividades; track $index) {
+              <th style="font-size: 0.75rem; text-align: center; border-right: 1px solid #4299e1; font-weight: normal;">{{ act.nombre }}</th>
+            }
+            <th style="font-size: 0.75rem; text-align: center; background-color: #4299e1; border-right: 1px solid #2b6cb0;">Sup.</th>
+            <th style="font-size: 0.75rem; text-align: center; background-color: #2a4365; border-right: 1px solid #2b6cb0;">Prom.</th>
+            <th style="font-size: 0.75rem; text-align: center; border-right: 2px solid #1a365d;">Estado / Docente</th>
+          }
+        </tr>
+      </thead>
+      <tbody style="background-color: rgba(255,255,255,0.9);">
+        @for (row of reporteData; track $index) {
+          <tr style="border-bottom: 1px solid #e2e8f0;">
+            <td style="text-align: center; font-weight: bold; color: #718096;">{{ row.antiguedad }}</td>
+            <td style="text-align: center;">{{ row.cedula }}</td>
+            <td style="text-transform: uppercase; font-weight: bold; color: #2d3748; border-right: 2px solid #e2e8f0;">{{ row.nombres }}<br><small style="color: #718096; font-weight: normal;">Paralelo: {{ row.paralelo }}</small></td>
+            
+            @for (asig of reporteAsignaturas; track $index) {
+              @for (act of asig.actividades; track $index) {
+                <td style="text-align: center; border-right: 1px solid #edf2f7;">{{ row.notasMateria[asig.id]?.notasActs[act.id] || '-' }}</td>
+              }
+              <td style="text-align: center; font-weight: bold; color: #dd6b20; background-color: #fffaf0; border-right: 1px solid #edf2f7;">{{ row.notasMateria[asig.id]?.supletorio || '-' }}</td>
+              <td style="text-align: center; font-weight: bold; font-size: 1.1rem; background-color: #edf2f7; border-right: 1px solid #cbd5e0;">{{ row.notasMateria[asig.id]?.promedio }}</td>
+              <td style="text-align: center; border-right: 2px solid #e2e8f0;">
+                <span [ngStyle]="{'color': row.notasMateria[asig.id]?.observacion.includes('NO') || row.notasMateria[asig.id]?.observacion === 'REPROBADO' ? '#e53e3e' : '#38a169', 'font-weight': 'bold'}">{{ row.notasMateria[asig.id]?.observacion }}</span>
+                <br><span style="font-size: 0.7rem; color: #718096;">👨‍🏫 {{ row.notasMateria[asig.id]?.docente }}</span>
+              </td>
+            }
+            <td style="text-align: center; font-weight: bold; font-size: 1.2rem; background-color: #ebf8ff; color: #2b6cb0;">{{ row.promedioGeneral | number:'1.2-2' }}</td>
+            <td style="text-align: center;"><span class="badge" [ngClass]="row.observacionGeneral === 'APROBADO' ? 'aprobado' : 'reprobado'">{{ row.observacionGeneral }}</span></td>
+          </tr>
+        }
+        <tr style="display: none;"><td colspan="100%">Documento generado oficialmente por: {{ usuarioActual?.nombres }} {{ usuarioActual?.apellidos }} - Fecha: {{ obtenerFechaActual() }}</td></tr>
+      </tbody>
+    </table>
+  </div>
+  }
+</div>
+}
+
+<!-- PANTALLA 19: MIS CALIFICACIONES (ESTUDIANTE) -->
+@if (vistaActual === 'mis-calificaciones') {
+<div class="contenedor">
+  <h1 class="titulo">🎓 Mi Libreta de Calificaciones</h1>
+  
+  @if (miLibreta) {
+  <!-- Información de Promoción requerida -->
+  <h2 style="color: #4a5568; margin-bottom: 15px; font-size: 1.2rem;">📌 Datos de la Promoción (Categoría Nivel 3)</h2>
+  <table class="tabla-moderna" style="margin-bottom: 20px; border: 2px solid #cbd5e0;">
+    <thead style="background-color: #2b6cb0;">
+      <tr>
+        <th style="text-align: left; color: white;">Nombre de la Promoción</th>
+        <th style="text-align: center; color: white; width: 200px;">Fecha de Inicio</th>
+        <th style="text-align: center; color: white; width: 200px;">Fecha de Fin</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style="background: #ebf8ff;">
+        <td style="font-weight: bold; text-transform: uppercase; color: #2d3748; font-size: 1.1rem;">{{ miLibreta.promocion_nombre }}</td>
+        <td style="text-align: center; font-weight: bold; color: #4a5568;">{{ miLibreta.fecha_inicio ? (miLibreta.fecha_inicio | date:'dd/MM/yyyy') : 'No Registrada' }}</td>
+        <td style="text-align: center; font-weight: bold; color: #4a5568;">{{ miLibreta.fecha_fin ? (miLibreta.fecha_fin | date:'dd/MM/yyyy') : 'No Registrada' }}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div style="text-align: right; margin-bottom: 25px; display: flex; justify-content: flex-end; gap: 15px;">
+    <button type="button" (click)="abrirModalCrearSolicitud()" style="padding: 12px 25px; background-color: #dd6b20; color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 15px; cursor: pointer; box-shadow: 0 4px 6px rgba(221, 107, 32, 0.3); transition: background 0.3s;" onmouseover="this.style.backgroundColor='#c05621'" onmouseout="this.style.backgroundColor='#dd6b20'">✉️ Solicitar Recalificación</button>
+    <button type="button" (click)="descargarPDFMiLibreta()" style="padding: 12px 25px; background-color: #e53e3e; color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 15px; cursor: pointer; box-shadow: 0 4px 6px rgba(229, 62, 62, 0.3); transition: background 0.3s;" onmouseover="this.style.backgroundColor='#c53030'" onmouseout="this.style.backgroundColor='#e53e3e'">📥 Descargar Reporte PDF</button>
+  </div>
+
+  <h2 style="color: #4a5568; margin-bottom: 15px; font-size: 1.2rem;">📊 Detalle de Calificaciones por Asignatura</h2>
+  <table class="tabla-moderna">
+    <thead style="background-color: #2d3748;">
+      <tr>
+        <th style="text-align: left; color: white; min-width: 200px;">Asignatura</th>
+        <th style="text-align: left; color: white;">Actividades Regulares</th>
+        <th style="text-align: center; color: white; width: 100px;">Supletorio</th>
+        <th style="text-align: center; color: white; width: 120px;">Prom. Final</th>
+        <th style="text-align: center; color: white; width: 150px;">Observación</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (mat of miLibreta.materias; track $index) {
+        <tr>
+          <td style="font-weight: bold; color: #2b6cb0;">{{ mat.nombre }}</td>
+          <td style="font-size: 0.85rem; color: #4a5568; font-style: italic;">{{ mat.actividades || 'Sin notas registradas' }}</td>
+          <td style="text-align: center; font-weight: bold; color: #dd6b20;">{{ mat.supletorio }}</td>
+          <td style="text-align: center; font-weight: bold; font-size: 1.2rem;" [ngStyle]="{'color': mat.promedioFinal < 14 ? '#e53e3e' : '#38a169'}">{{ mat.promedioFinal }}</td>
+          <td style="text-align: center;"><span class="badge" [ngClass]="mat.observacion === 'APROBADO' || mat.observacion === 'APTO' ? 'aprobado' : (mat.observacion === '-' ? '' : 'reprobado')">{{ mat.observacion }}</span></td>
+        </tr>
+      } @empty {
+        <tr><td colspan="5" style="padding: 30px; text-align: center; color: #718096; font-style: italic;">Aún no tiene calificaciones registradas en esta promoción.</td></tr>
+      }
+    </tbody>
+  </table>
+  } @else {
+  <div style="padding: 50px; text-align: center; color: #718096; background: white; border-radius: 12px; border: 2px dashed #cbd5e0;">
+    <p style="font-size: 1.2rem; margin: 0;">Usted no posee una matrícula activa actualmente para generar su libreta de notas.</p>
+  </div>
+  }
+</div>
+}
+}
